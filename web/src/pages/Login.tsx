@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useStore } from '../lib/store';
+import { ForgotForm } from './AuthPages';
 
 const ERRORS: Record<string, string> = {
   invalid_credentials: 'Неверный email или пароль',
   email_taken: 'Этот email уже зарегистрирован',
   validation: 'Проверьте поля. Пароль — минимум 8 символов',
+  session_expired: 'Пароль был изменён — войдите заново',
   signup_disabled: 'Регистрация закрыта',
 };
 
@@ -14,7 +16,7 @@ export default function Login() {
   const { login } = useStore();
   const nav = useNavigate();
   const [sp] = useSearchParams();
-  const [mode, setMode] = useState<'login' | 'signup'>(sp.get('mode') === 'signup' ? 'signup' : 'login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(sp.get('mode') === 'signup' ? 'signup' : 'login');
   const [f, setF] = useState({ company: '', name: '', email: '', password: '' });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,10 +42,11 @@ export default function Login() {
           Пульс CRM
         </div>
         <p className="sub" style={{ marginTop: 0 }}>Продажи, посещаемость и клиенты вашего бизнеса в одном месте</p>
-        <div className="tabs">
+        {mode !== 'forgot' && <div className="tabs">
           <button className={mode === 'login' ? 'on' : ''} onClick={() => setMode('login')}>Вход</button>
           <button className={mode === 'signup' ? 'on' : ''} onClick={() => setMode('signup')}>Регистрация</button>
-        </div>
+        </div>}
+        {mode === 'forgot' ? <ForgotForm onBack={() => setMode('login')} /> : (
         <form className="form" onSubmit={submit}>
           {mode === 'signup' && <>
             <label className="field">Название компании<input required value={f.company} onChange={set('company')} /></label>
@@ -53,7 +56,9 @@ export default function Login() {
           <label className="field">Пароль<input type="password" required minLength={mode === 'signup' ? 8 : 1} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={f.password} onChange={set('password')} /></label>
           {err && <div className="error">{err}</div>}
           <button className="btn primary" disabled={busy} style={{ justifyContent: 'center' }}>{mode === 'login' ? 'Войти' : 'Создать аккаунт'}</button>
+          {mode === 'login' && <button type="button" className="btn" style={{ justifyContent: 'center', border: 0 }} onClick={() => setMode('forgot')}>Забыли пароль?</button>}
         </form>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { billingEnabled, tenantState } from './billing.js';
+import { one } from './db.js';
 
 export type Role = 'owner' | 'admin' | 'manager' | 'viewer';
 export interface AuthUser { uid: string; tid: string; role: Role }
@@ -14,12 +15,26 @@ const RANK: Record<Role, number> = { viewer: 0, manager: 1, admin: 2, owner: 3 }
 // Сбор статистики и вывод контента на сайт клиента при этом продолжают работать.
 const FROZEN_ALLOWED = /^\/api\/(me|billing|auth|admin)(\/|$|\?)/;
 
+// После смены пароля все ранее выданные токены перестают действовать
+const pwdCache = new Map<string, { at: number; changed: number }>();
+export const invalidateUser = (uid: string) => pwdCache.delete(uid);
+async function passwordChangedAt(uid: string) {
+  const c = pwdCache.get(uid);
+  if (c && Date.now() - c.at < 15_000) return c.changed;
+  const u = await one<{ ts: Date }>('SELECT password_changed_at AS ts FROM users WHERE id=$1', [uid]);
+  const changed = u ? new Date(u.ts).getTime() : Infinity; // пользователь удалён — токен недействителен
+  pwdCache.set(uid, { at: Date.now(), changed });
+  return changed;
+}
+
 export async function requireAuth(req: FastifyRequest, reply: FastifyReply) {
   try {
     await req.jwtVerify();
   } catch {
     return reply.code(401).send({ error: 'unauthorized' });
   }
+  const iat = ((req.user as any).iat ?? 0) * 1000;
+  if (iat + 1000 < (await passwordChangedAt(req.user.uid))) return reply.code(401).send({ error: 'session_expired' });
   if (billingEnabled() && !FROZEN_ALLOWED.test(req.url) && !(req.method === 'GET' && /^\/api\/(sites|team)(\?|$)/.test(req.url))) {
     const st = await tenantState(req.user.tid);
     if (st.status === 'frozen') return reply.code(402).send({ error: 'payment_required' });

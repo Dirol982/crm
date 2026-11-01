@@ -7,6 +7,8 @@ import { randomUUID } from 'node:crypto';
 import { one, pool, q } from './db.js';
 import { config } from './config.js';
 import { GRACE_DAYS, isPlan, PLANS, priceFor, TRIAL_PLAN, type PlanId } from './plans.js';
+import { queueEmail } from './mailer.js';
+import { paymentSucceededEmail, renewFailedEmail } from './emails.js';
 
 export const billingConfig = {
   shopId: process.env.YOOKASSA_SHOP_ID ?? '',
@@ -69,7 +71,7 @@ export async function usage(tenantId: string) {
     `SELECT
        (SELECT count(*) FROM sessions s JOIN sites st ON st.id=s.site_id WHERE st.tenant_id=$1 AND s.started_at >= date_trunc('month', now()))::int AS visits,
        (SELECT count(*) FROM sites WHERE tenant_id=$1)::int AS sites,
-       (SELECT count(*) FROM memberships WHERE tenant_id=$1)::int AS users`,
+       ((SELECT count(*) FROM memberships WHERE tenant_id=$1) + (SELECT count(*) FROM invitations WHERE tenant_id=$1 AND accepted_at IS NULL AND expires_at > now()))::int AS users`,
     [tenantId],
   );
   return r as { visits: number; sites: number; users: number };
@@ -181,6 +183,12 @@ export async function applyPayment(paymentId: string, method?: { id: string; tit
     );
     await client.query('COMMIT');
     invalidateState(p.tenant_id);
+    const { billingContact } = await import('./notify.js');
+    const c = await billingContact(p.tenant_id);
+    if (c?.email) {
+      await queueEmail({ to: c.email, kind: 'payment_succeeded', tenantId: p.tenant_id,
+        ...paymentSucceededEmail({ company: c.company, plan: PLANS[p.plan as PlanId]?.name ?? p.plan, amount: Number(p.amount), until, renewal: p.is_renewal }) });
+    }
     return true;
   } catch (e) {
     await client.query('ROLLBACK');
@@ -216,7 +224,7 @@ export async function syncPayment(paymentId: string) {
 export async function autoRenew(log?: { info: (m: string) => void; error: (e: unknown) => void }) {
   if (!billingEnabled()) return;
   const due = await q(
-    `SELECT t.id, t.plan, t.billing_period, t.payment_method_id, t.billing_email,
+    `SELECT t.id, t.plan, t.billing_period, t.payment_method_id, t.billing_email, t.paid_until,
             (SELECT u.email FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.tenant_id=t.id AND m.role='owner' LIMIT 1) AS owner_email
      FROM tenants t
      WHERE t.auto_renew AND t.payment_method_id IS NOT NULL AND t.paid_until IS NOT NULL
@@ -242,6 +250,9 @@ export async function autoRenew(log?: { info: (m: string) => void; error: (e: un
       if (r.status === 'succeeded') await applyPayment(p!.id, null);
       else if (r.status === 'canceled') {
         await pool.query(`UPDATE payments SET status='canceled', error=$2 WHERE id=$1`, [p!.id, r.cancellation_details?.reason ?? 'canceled']);
+        const { billingContact } = await import('./notify.js');
+        const c = await billingContact(t.id);
+        if (c?.email) await queueEmail({ to: c.email, kind: 'renew_failed', tenantId: t.id, ...renewFailedEmail({ company: c.company, reason: r.cancellation_details?.reason ?? '', until: t.paid_until }) });
         // карта больше не работает (отозвано разрешение, истёк срок) — не пытаемся снова
         if (['permission_revoked', 'card_expired'].includes(r.cancellation_details?.reason)) {
           await pool.query('UPDATE tenants SET payment_method_id=NULL, payment_method_title=NULL WHERE id=$1', [t.id]);

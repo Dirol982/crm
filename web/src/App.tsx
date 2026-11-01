@@ -4,6 +4,7 @@ import { Loading } from './components/ui';
 import { StoreProvider, useStore } from './lib/store';
 import Behavior from './pages/Behavior';
 import Billing from './pages/Billing';
+import { AcceptInvite, ResetPassword } from './pages/AuthPages';
 import Platform from './pages/Platform';
 import Blocks from './pages/Blocks';
 import Calendar from './pages/Calendar';
@@ -74,7 +75,12 @@ export default function App() {
   return (
     <StoreProvider>
       <HashRouter>
-        <Routed />
+        <Routes>
+          {/* ссылки из писем открываются и без входа */}
+          <Route path="/reset" element={<ResetPassword />} />
+          <Route path="/invite" element={<AcceptInvite />} />
+          <Route path="*" element={<Routed />} />
+        </Routes>
       </HashRouter>
     </StoreProvider>
   );
