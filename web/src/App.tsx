@@ -3,6 +3,8 @@ import { Layout } from './components/Layout';
 import { Loading } from './components/ui';
 import { StoreProvider, useStore } from './lib/store';
 import Behavior from './pages/Behavior';
+import Billing from './pages/Billing';
+import Platform from './pages/Platform';
 import Blocks from './pages/Blocks';
 import Calendar from './pages/Calendar';
 import Channels from './pages/Channels';
@@ -30,6 +32,18 @@ function Routed() {
       </Routes>
     );
   }
+  // Не оплачено — доступна только страница оплаты (и кабинет владельца платформы)
+  if (me.billing?.status === 'frozen') {
+    return (
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="billing" element={<Billing />} />
+          {me.is_superadmin && <Route path="platform" element={<Platform />} />}
+        </Route>
+        <Route path="*" element={<Navigate to="/billing" replace />} />
+      </Routes>
+    );
+  }
   return (
     <Routes>
       <Route element={<Layout />}>
@@ -48,6 +62,8 @@ function Routed() {
         <Route path="channels" element={<Channels />} />
         <Route path="integrations" element={<Integrations />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="billing" element={<Billing />} />
+        {me.is_superadmin && <Route path="platform" element={<Platform />} />}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

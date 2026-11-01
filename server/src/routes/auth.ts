@@ -5,6 +5,7 @@ import { one, q, tx } from '../lib/db.js';
 import { requireAuth, requireRole, type Role } from '../lib/auth.js';
 import { config } from '../lib/config.js';
 import { genKey } from '../lib/util.js';
+import { assertLimit, billingConfig, tenantState } from '../lib/billing.js';
 
 const signupSchema = z.object({
   company: z.string().trim().min(1).max(200),
@@ -61,7 +62,9 @@ export default async function authRoutes(app: FastifyInstance) {
       'SELECT t.id, t.name, m.role FROM memberships m JOIN tenants t ON t.id=m.tenant_id WHERE m.user_id=$1 ORDER BY t.name',
       [uid],
     );
-    return { user, tenant, role, workspaces };
+    const billing = await tenantState(tid);
+    const is_superadmin = !!user && billingConfig.superadmins.includes(user.email.toLowerCase());
+    return { user, tenant, role, workspaces, billing, is_superadmin };
   });
 
   app.post('/api/auth/switch', { preHandler: requireAuth }, async (req, reply) => {
@@ -98,6 +101,7 @@ export default async function authRoutes(app: FastifyInstance) {
       role: z.enum(['admin', 'manager', 'viewer']),
       password: z.string().min(8).max(200),
     }).parse(req.body);
+    await assertLimit(req.user.tid, 'users');
     let user = await one('SELECT id FROM users WHERE email=$1', [body.email]);
     if (!user) {
       user = await one('INSERT INTO users(email,name,password_hash) VALUES ($1,$2,$3) RETURNING id', [body.email, body.name, await bcrypt.hash(body.password, 10)]);

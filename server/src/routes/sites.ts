@@ -4,6 +4,7 @@ import { one, q } from '../lib/db.js';
 import { requireAuth, requireRole } from '../lib/auth.js';
 import { genKey } from '../lib/util.js';
 import { config } from '../lib/config.js';
+import { assertLimit } from '../lib/billing.js';
 
 const siteBody = z.object({
   name: z.string().trim().min(1).max(200),
@@ -29,6 +30,7 @@ export default async function siteRoutes(app: FastifyInstance) {
 
   app.post('/api/sites', { preHandler: requireRole('admin') }, async (req) => {
     const body = siteBody.parse(req.body);
+    await assertLimit(req.user.tid, 'sites');
     return one(
       'INSERT INTO sites(tenant_id,name,domain,public_key,secret_key) VALUES ($1,$2,$3,$4,$5) RETURNING id, name, domain, public_key, created_at',
       [req.user.tid, body.name, body.domain || null, genKey('pk'), genKey('sk', 24)],

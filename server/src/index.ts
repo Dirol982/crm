@@ -15,6 +15,8 @@ import crmRoutes from './routes/crm.js';
 import analyticsRoutes from './routes/analytics.js';
 import contentRoutes, { publishDue } from './routes/content.js';
 import channelRoutes, { processDeliveries } from './routes/channels.js';
+import billingRoutes from './routes/billing.js';
+import { autoRenew, billingEnabled, syncPending } from './lib/billing.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' }, trustProxy: true, bodyLimit: 1024 * 1024 });
@@ -46,6 +48,7 @@ export async function buildApp() {
   await app.register(analyticsRoutes);
   await app.register(contentRoutes);
   await app.register(channelRoutes);
+  await app.register(billingRoutes);
 
   // Раздача собранной панели (web/dist), если она есть
   if (existsSync(config.webDist)) {
@@ -73,4 +76,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     .catch((e) => app.log.error(e));
   tick();
   setInterval(tick, 30_000).unref();
+  // Оплата: автопродление и сверка платежей — раз в 5 минут
+  if (billingEnabled()) {
+    const billingTick = () => syncPending(app.log).then(() => autoRenew(app.log)).catch((e) => app.log.error(e));
+    billingTick();
+    setInterval(billingTick, 5 * 60_000).unref();
+    app.log.info('billing: YooKassa enabled');
+  }
 }
