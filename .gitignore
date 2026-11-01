@@ -4,3 +4,4 @@ dist-demo/
 .env
 *.log
 .DS_Store
+uploads/

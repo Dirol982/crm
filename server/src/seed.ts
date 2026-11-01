@@ -141,4 +141,47 @@ async function main() {
   });
 }
 
-main().then(() => pool.end()).catch((e) => { console.error(e); process.exit(1); });
+/** Публикации, страницы и блоки демо-сайта (идемпотентно) */
+async function seedContent() {
+  const site = (await pool.query("SELECT s.id, s.tenant_id FROM sites s WHERE s.public_key='pk_demo'")).rows[0];
+  if (!site || (await pool.query('SELECT 1 FROM posts WHERE site_id=$1 LIMIT 1', [site.id])).rowCount) return;
+  const author = (await pool.query("SELECT id FROM users WHERE email='demo@example.com'")).rows[0]?.id;
+  const P = (title: string, slug: string, status: string, days: number, tags: string[], body: string, type = 'post') => [title, slug, status, days, tags, body, type] as const;
+  const items = [
+    P('Как выбрать кроссовки для бега', 'kak-vybrat-krossovki', 'published', -20, ['советы'], '<p>Правильная пара снижает нагрузку на суставы. Рассказываем, на что смотреть в магазине.</p><h2>Амортизация</h2><p>Для асфальта нужна мягкая подошва, для трейла — жёсткая и с протектором.</p><h2>Размер</h2><p>Между большим пальцем и носком должен оставаться зазор около сантиметра.</p>'),
+    P('Осенняя распродажа: скидки до 40%', 'osennyaya-rasprodazha', 'published', -9, ['новости', 'акции'], '<p>С 20 октября по 10 ноября — скидки до 40% на коллекцию прошлого сезона.</p><ul><li>Кроссовки — до 30%</li><li>Сумки и рюкзаки — до 40%</li></ul>'),
+    P('Новая коллекция сумок', 'novaya-kollektsiya-sumok', 'published', -3, ['новости'], '<p>Встречайте новую коллекцию: натуральная кожа, три цвета, сделано в России.</p>'),
+    P('Уход за кожаной обувью зимой', 'uhod-za-kozhanoy-obuvyu', 'scheduled', 2, ['советы'], '<p>Соль и реагенты — главные враги кожи. Как сохранить обувь до весны.</p>'),
+    P('Чёрная пятница 2026', 'chernaya-pyatnitsa-2026', 'scheduled', 26, ['акции'], '<p>Главная распродажа года. Подпишитесь, чтобы не пропустить старт.</p>'),
+    P('Подарки к Новому году: подборка', 'podarki-k-novomu-godu', 'review', 12, ['подборки'], '<p>Черновик подборки подарков до 5 000 ₽.</p>'),
+    P('Интервью с дизайнером коллекции', 'intervyu-s-dizaynerom', 'draft', 18, ['истории'], '<p>Текст в работе.</p>'),
+    P('Обзор беговых маршрутов города', 'obzor-marshrutov', 'idea', 34, [], ''),
+    P('Доставка и оплата', 'delivery', 'published', -60, [], '<h2>Доставка</h2><p>По Москве — 1 день, по России — 2–7 дней. Бесплатно от 5 000 ₽.</p><h2>Оплата</h2><p>Картой онлайн, СБП или при получении.</p>', 'page'),
+    P('О компании', 'about', 'published', -60, [], '<p>Мы продаём обувь и аксессуары с 2015 года.</p>', 'page'),
+  ];
+  for (const [title, slug, status, days, tags, body, type] of items) {
+    const when = new Date(Date.now() + days * 86400000);
+    await pool.query(
+      `INSERT INTO posts(tenant_id,site_id,type,title,slug,content,tags,status,publish_at,published_at,author_id,created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [site.tenant_id, site.id, type, title, slug, body, tags, status, when,
+        status === 'published' ? when : null, author, new Date(Math.min(Date.now(), when.getTime()))],
+    );
+    if (status === 'published' && type === 'post') {
+      const n = 40 + Math.floor(Math.random() * 300);
+      await pool.query(
+        `INSERT INTO events(site_id,name,path,props,ts) SELECT $1,'post_view','/blog',$2::jsonb, now() - random()*($3::int * interval '1 day') FROM generate_series(1,$4)`,
+        [site.id, JSON.stringify({ slug }), Math.max(1, -days), n],
+      );
+    }
+  }
+  await pool.query(
+    `INSERT INTO content_blocks(tenant_id,site_id,key,title,html,active,ends_at) VALUES
+     ($1,$2,'top-banner','Баннер распродажи','<p><strong>Осенняя распродажа</strong> — скидки до 40% до 10 ноября!</p>',true, now() + interval '9 days'),
+     ($1,$2,'footer-note','Режим работы','<p>Пн–Вс, 10:00–21:00 · +7 495 000-00-00</p>',true,NULL)`,
+    [site.tenant_id, site.id],
+  );
+  console.log('seeded content');
+}
+
+main().then(seedContent).then(() => pool.end()).catch((e) => { console.error(e); process.exit(1); });

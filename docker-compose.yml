@@ -24,8 +24,11 @@ services:
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
       ALLOW_SIGNUP: ${ALLOW_SIGNUP:-true}
+    volumes:
+      - uploads:/app/uploads
     ports:
       - "${PORT:-3000}:3000"
 
 volumes:
   pgdata:
+  uploads:

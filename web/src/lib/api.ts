@@ -38,3 +38,16 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
 
 export const qs = (o: Record<string, string | number | undefined | null | boolean>) =>
   '?' + Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join('&');
+
+/** Загрузка картинки: возвращает публичный URL (в демо — data URL) */
+export async function uploadImage(file: File): Promise<string> {
+  if (DEMO) {
+    return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = rej; r.readAsDataURL(file); });
+  }
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch(BASE + '/api/uploads', { method: 'POST', body: fd, headers: getToken() ? { authorization: `Bearer ${getToken()}` } : {} });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new ApiError(res.status, data?.error ?? 'error');
+  return data.url;
+}

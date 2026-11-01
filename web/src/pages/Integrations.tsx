@@ -18,7 +18,7 @@ export default function Integrations() {
   const { sites, can, refresh } = useStore();
   const [sel, setSel] = useState(0);
   const [adding, setAdding] = useState(false);
-  const [tab, setTab] = useState<'js' | 'events' | 'api' | 'cms'>('js');
+  const [tab, setTab] = useState<'js' | 'events' | 'api' | 'content' | 'cms'>('js');
   const s = sites[sel] ?? sites[0];
   if (!s) return <PageHeader title="Подключение" filters={false} />;
 
@@ -47,6 +47,7 @@ export default function Integrations() {
           <button className={tab === 'js' ? 'on' : ''} onClick={() => setTab('js')}>1. Код на сайт</button>
           <button className={tab === 'events' ? 'on' : ''} onClick={() => setTab('events')}>2. Заявки и покупки</button>
           <button className={tab === 'api' ? 'on' : ''} onClick={() => setTab('api')}>3. Серверный API</button>
+          <button className={tab === 'content' ? 'on' : ''} onClick={() => setTab('content')}>4. Контент на сайте</button>
           <button className={tab === 'cms' ? 'on' : ''} onClick={() => setTab('cms')}>Tilda, WordPress, 1С…</button>
         </div>
         {tab === 'js' && (
@@ -88,6 +89,31 @@ const { visitor, session } = crm('ids');`}</Code>
     "visitor_id": "<из crm('ids').visitor>"
   }'`}</Code>
             <p className="sub" style={{ margin: 0 }}>Также доступны <code>POST /api/v1/contacts</code> (клиент/заявка) и <code>POST /api/v1/events</code> (события). Статусы заказа: paid, pending, cancelled, refunded.</p>
+          </div>
+        )}
+        {tab === 'content' && (
+          <div className="stack">
+            <p style={{ margin: 0 }}>Публикации, страницы и блоки из раздела «Сайт» выводятся тем же кодом из шага 1 — добавьте в нужное место страницы контейнер:</p>
+            <Code>{`<!-- Блог / новости: лента карточек; по клику открывается статья (?post=адрес) -->
+<div data-crm-posts data-limit="9"></div>
+
+<!-- Только новости с тегом -->
+<div data-crm-posts data-tag="новости"></div>
+
+<!-- Страница сайта, созданная в CRM («Доставка», «О компании»…) -->
+<div data-crm-post data-type="page" data-slug="delivery"></div>
+
+<!-- Баннер или объявление из раздела «Блоки сайта» -->
+<div data-crm-block="top-banner"></div>`}</Code>
+            <p className="sub" style={{ margin: 0 }}>
+              Запланированные материалы появляются на сайте автоматически в назначенное время. Свой формат ссылок на статьи: <code>data-link="/blog/{'{slug}'}"</code>.
+              Отключить стандартное оформление: <code>data-no-style</code> на теге скрипта. Просмотры статей видны в разделе «Публикации».
+            </p>
+            <div><b>Для разработчиков — JSON API</b> (без ключей, только опубликованное):</div>
+            <Code>{`GET ${s.api_url.replace(/\/api\/v1$/, '')}/c/${s.public_key}/posts?limit=10&tag=новости
+GET ${s.api_url.replace(/\/api\/v1$/, '')}/c/${s.public_key}/posts/{slug}?type=post|page
+GET ${s.api_url.replace(/\/api\/v1$/, '')}/c/${s.public_key}/blocks
+GET ${s.api_url.replace(/\/api\/v1$/, '')}/c/${s.public_key}/rss.xml?link=https://site.ru/blog/{slug}`}</Code>
           </div>
         )}
         {tab === 'cms' && (

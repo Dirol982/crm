@@ -3,6 +3,10 @@ import { Layout } from './components/Layout';
 import { Loading } from './components/ui';
 import { StoreProvider, useStore } from './lib/store';
 import Behavior from './pages/Behavior';
+import Blocks from './pages/Blocks';
+import Calendar from './pages/Calendar';
+import Content from './pages/Content';
+import PostEditor from './pages/PostEditor';
 import ContactPage from './pages/ContactPage';
 import Contacts from './pages/Contacts';
 import Dashboard from './pages/Dashboard';
@@ -36,6 +40,10 @@ function Routed() {
         <Route path="contacts/:id" element={<ContactPage />} />
         <Route path="deals" element={<Deals />} />
         <Route path="tasks" element={<Tasks />} />
+        <Route path="content" element={<Content />} />
+        <Route path="content/:id" element={<PostEditor />} />
+        <Route path="calendar" element={<Calendar />} />
+        <Route path="blocks" element={<Blocks />} />
         <Route path="integrations" element={<Integrations />} />
         <Route path="settings" element={<Settings />} />
       </Route>

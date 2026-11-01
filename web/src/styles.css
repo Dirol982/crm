@@ -217,3 +217,47 @@ td.trunc { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-sp
   .funnel-row { grid-template-columns: 96px 1fr 72px; gap: 8px; }
   .table-wrap { margin: 0 -18px; }
 }
+
+/* ---------- Контент ---------- */
+.editor-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.title-input { font-size: 22px; font-weight: 650; border: 0; background: transparent; padding: 4px 0; width: 100%; }
+.title-input:focus { outline: none; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px; border: 1px solid var(--border); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--surface-2); position: sticky; top: 0; z-index: 2; }
+.toolbar button { border: 0; background: none; color: var(--text); font: inherit; font-weight: 600; min-width: 32px; height: 30px; border-radius: 6px; cursor: pointer; padding: 0 8px; }
+.toolbar button:hover, .toolbar button.on { background: var(--surface); }
+.toolbar .sep { width: 1px; background: var(--border); margin: 4px 4px; }
+.rich { min-height: 360px; border: 1px solid var(--border); border-radius: 0 0 8px 8px; padding: 14px 16px; background: var(--surface); line-height: 1.65; overflow-wrap: anywhere; }
+.rich:focus { outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset: -1px; }
+.rich:empty::before { content: attr(data-placeholder); color: var(--muted); }
+.rich img, .rich iframe { max-width: 100%; border-radius: 8px; }
+.rich iframe { aspect-ratio: 16/9; width: 100%; height: auto; }
+.rich blockquote { margin: 1em 0; padding: 0.2em 1em; border-left: 3px solid var(--axis); color: var(--text-2); }
+.rich h2 { font-size: 20px; margin: 1em 0 0.4em; } .rich h3 { font-size: 16px; margin: 1em 0 0.4em; }
+textarea.html-src { min-height: 360px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; border-radius: 0 0 8px 8px; }
+.cover-preview { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+.post-row-cover { width: 56px; height: 36px; object-fit: cover; border-radius: 5px; background: var(--surface-2); display: block; }
+
+.cal-head { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; font-size: 12px; color: var(--muted); font-weight: 550; padding: 0 0 6px; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--grid); border: 1px solid var(--grid); border-radius: var(--radius); overflow: hidden; }
+.cal-day { background: var(--surface); min-height: 112px; padding: 6px; display: flex; flex-direction: column; gap: 4px; position: relative; min-width: 0; }
+.cal-day.out { background: var(--surface-2); }
+.cal-day.out .cal-num { color: var(--muted); }
+.cal-day.today .cal-num { background: var(--accent); color: var(--accent-ink); }
+.cal-day.over { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.cal-num { font-size: 12px; font-weight: 600; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; }
+.cal-add { position: absolute; top: 6px; right: 6px; opacity: 0; border: 0; background: var(--surface-2); color: var(--text-2); width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-size: 16px; line-height: 1; }
+.cal-day:hover .cal-add, .cal-add:focus { opacity: 1; }
+.chip { display: flex; align-items: center; gap: 5px; font-size: 12px; padding: 3px 6px; border-radius: 5px; background: var(--surface-2); color: var(--text); cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border: 1px solid var(--border); }
+.chip:hover { border-color: var(--axis); text-decoration: none; }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.chip span { overflow: hidden; text-overflow: ellipsis; }
+.chip time { color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1000px) { .editor-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .cal-head { display: none; }
+  .cal { grid-template-columns: minmax(0, 1fr); }
+  .cal-day { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .cal-day.out, .cal-day.empty { display: none; }
+  .cal-add { opacity: 1; position: static; margin-left: auto; }
+}

@@ -32,3 +32,11 @@ export const isoDay = (d: Date) => {
 
 /** Изменение к прошлому периоду */
 export const change = (cur: number, prev: number) => (prev ? (cur - prev) / prev : cur ? 1 : 0);
+
+/** ISO → значение для <input type="datetime-local"> в локальном времени */
+export const toLocalInput = (iso: string | null | undefined) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
+export const fromLocalInput = (v: string) => (v ? new Date(v).toISOString() : null);
