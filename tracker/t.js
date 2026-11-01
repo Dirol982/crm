@@ -13,6 +13,20 @@
   var KEY = script.getAttribute('data-key');
   var ENDPOINT = script.getAttribute('data-endpoint') || script.src.replace(/\/t\.js(\?.*)?$/, '/t');
   var SESSION_TTL = 30 * 60 * 1000;
+  // Контент из CRM (публикации, страницы, блоки) показываем всем, включая поисковых роботов;
+  // cms.js грузится, только если на странице есть контейнеры
+  function loadCms() {
+    if (!d.querySelector('[data-crm-posts],[data-crm-post],[data-crm-block]')) return;
+    var s = d.createElement('script');
+    s.async = true;
+    s.src = script.src.replace(/\/t\.js(\?.*)?$/, '/cms.js');
+    s.setAttribute('data-crm-cms', '');
+    s.setAttribute('data-key', KEY);
+    if (script.hasAttribute('data-no-style')) s.setAttribute('data-no-style', '');
+    d.head.appendChild(s);
+  }
+  if (KEY) { if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', loadCms); else loadCms(); }
+
   if (!KEY || navigator.webdriver || /bot|crawl|spider|headless/i.test(navigator.userAgent)) return;
   if (navigator.doNotTrack === '1' && script.hasAttribute('data-respect-dnt')) return;
 

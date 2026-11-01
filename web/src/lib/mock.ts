@@ -143,6 +143,56 @@ for (let i = 0; i < 14; i++) {
   tasks.push({ id: id(), title: TASKS[i % TASKS.length], due_at: new Date(now + (i - 4) * DAY).toISOString(), done: i < 3, assignee_id: i % 2 ? USER.id : MANAGER.id, contact_id: contacts[i].id, deal_id: null, created_at: new Date(now - 5 * DAY).toISOString() });
 }
 
+// ---------------- Контент сайта ----------------
+const slugify = (t: string) => {
+  const tr: Record<string, string> = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
+  return t.toLowerCase().split('').map((c) => tr[c] ?? c).join('').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'post';
+};
+const COVERS = ['#2a78d6', '#eb6834', '#1baf7a', '#6250d6'].map((c, i) =>
+  'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="${c}"/><circle cx="${60 + i * 60}" cy="70" r="46" fill="white" fill-opacity=".25"/><rect x="150" y="104" width="130" height="14" rx="7" fill="white" fill-opacity=".5"/></svg>`));
+const POSTS_SRC: [string, string, number, string[], string, string?][] = [
+  ['Как выбрать кроссовки для бега', 'published', -20, ['советы'], '<p>Правильная пара снижает нагрузку на суставы. Рассказываем, на что смотреть в магазине.</p><h2>Амортизация</h2><p>Для асфальта нужна мягкая подошва, для трейла — жёсткая и с протектором.</p><h2>Размер</h2><p>Между большим пальцем и носком должен оставаться зазор около сантиметра.</p>'],
+  ['Осенняя распродажа: скидки до 40%', 'published', -9, ['новости', 'акции'], '<p>С 20 октября по 10 ноября — скидки до 40% на коллекцию прошлого сезона.</p><ul><li>Кроссовки — до 30%</li><li>Сумки и рюкзаки — до 40%</li></ul>'],
+  ['Новая коллекция сумок', 'published', -3, ['новости'], '<p>Встречайте новую коллекцию: натуральная кожа, три цвета, сделано в России.</p>'],
+  ['Уход за кожаной обувью зимой', 'scheduled', 2, ['советы'], '<p>Соль и реагенты — главные враги кожи. Как сохранить обувь до весны.</p>'],
+  ['Как подобрать рюкзак для города', 'scheduled', 6, ['советы'], '<p>Объём, спинка, отделение для ноутбука — разбираем по пунктам.</p>'],
+  ['Чёрная пятница 2026', 'scheduled', 26, ['акции'], '<p>Главная распродажа года. Подпишитесь, чтобы не пропустить старт.</p>'],
+  ['Подарки к Новому году: подборка', 'review', 12, ['подборки'], '<p>Черновик подборки подарков до 5 000 ₽.</p>'],
+  ['Интервью с дизайнером коллекции', 'draft', 18, ['истории'], '<p>Текст в работе.</p>'],
+  ['Обзор беговых маршрутов города', 'idea', 34, [], ''],
+  ['Итоги года: что покупали чаще всего', 'idea', 50, [], ''],
+  ['Доставка и оплата', 'published', -60, [], '<h2>Доставка</h2><p>По Москве — 1 день, по России — 2–7 дней. Бесплатно от 5 000 ₽.</p><h2>Оплата</h2><p>Картой онлайн, СБП или при получении.</p>', 'page'],
+  ['О компании', 'published', -60, [], '<p>Мы продаём обувь и аксессуары с 2015 года.</p>', 'page'],
+];
+const posts: any[] = POSTS_SRC.map(([title, status, days, tags, content, type], i) => {
+  const at = new Date(now + days * DAY); at.setHours(10 + (i % 3) * 3, 0, 0, 0);
+  return {
+    id: id(), site_id: sites[0].id, type: type ?? 'post', title, slug: slugify(title), excerpt: null, content, tags, status,
+    cover_url: (type ?? 'post') === 'post' && i < 6 ? COVERS[i % COVERS.length] : null,
+    publish_at: at.toISOString(), published_at: status === 'published' ? at.toISOString() : null,
+    seo_title: null, seo_description: null, author_id: USER.id, updated_at: new Date(now - i * 3600000).toISOString(),
+    views: status === 'published' && (type ?? 'post') === 'post' ? rnd(80, 900) : 0,
+  };
+});
+const blocks: any[] = [
+  { id: id(), site_id: sites[0].id, key: 'top-banner', title: 'Баннер распродажи', html: '<p><strong>Осенняя распродажа</strong> — скидки до 40% до 10 ноября!</p>', active: true, starts_at: null, ends_at: new Date(now + 9 * DAY).toISOString() },
+  { id: id(), site_id: sites[0].id, key: 'footer-note', title: 'Режим работы', html: '<p>Пн–Вс, 10:00–21:00 · +7 495 000-00-00</p>', active: true, starts_at: null, ends_at: null },
+  { id: id(), site_id: sites[0].id, key: 'bf-banner', title: 'Баннер «Чёрная пятница»', html: '<p><strong>Чёрная пятница</strong> — скидки до 60%</p>', active: true, starts_at: new Date(now + 26 * DAY).toISOString(), ends_at: new Date(now + 30 * DAY).toISOString() },
+];
+const siteName = (sid: string) => sites.find((s) => s.id === sid)?.name ?? '';
+function savePost(p: any, b: any) {
+  Object.assign(p, b);
+  if (b.title && !p.slug) p.slug = slugify(b.title);
+  if (b.slug === null) p.slug = slugify(p.title);
+  if (p.status === 'scheduled') {
+    if (!p.publish_at) throw new Error('publish_at_required');
+    if (Date.parse(p.publish_at) <= Date.now()) { p.status = 'published'; p.published_at = p.publish_at; }
+  } else if (p.status === 'published') p.published_at = p.published_at ?? new Date().toISOString();
+  else if (p.status !== 'archived') p.published_at = null;
+  p.updated_at = new Date().toISOString();
+  return p;
+}
+
 // ---------------- Аналитика ----------------
 const dayOf = (ts: number) => isoDay(new Date(ts));
 const inRange = (ts: number, from: string, to: string) => { const d = dayOf(ts); return d >= from && d <= to; };
@@ -280,6 +330,24 @@ const handlers: [string, RegExp, (m: RegExpMatchArray, p: URLSearchParams, body:
   ['POST', /^\/api\/tasks$/, (_m, _p, b) => { const t = { id: id(), done: false, assignee_id: USER.id, ...b, created_at: new Date().toISOString() }; tasks.unshift(t); return t; }],
   ['PATCH', /^\/api\/tasks\/([^/]+)$/, (m, _p, b) => Object.assign(tasks.find((t) => t.id === m[1]), b)],
   ['DELETE', /^\/api\/tasks\/([^/]+)$/, (m) => { tasks.splice(tasks.findIndex((t) => t.id === m[1]), 1); return { ok: true }; }],
+
+  ['GET', /^\/api\/posts\/calendar$/, (_m, p) => posts
+    .filter((x) => x.status !== 'archived' && (!p.get('site') || x.site_id === p.get('site')))
+    .map((x) => ({ id: x.id, site_id: x.site_id, site_name: siteName(x.site_id), type: x.type, title: x.title, status: x.status, date: x.published_at ?? x.publish_at }))
+    .filter((x) => x.date && x.date.slice(0, 10) >= p.get('from')! && x.date.slice(0, 10) <= p.get('to')!)],
+  ['GET', /^\/api\/posts$/, (_m, p) => posts
+    .filter((x) => (!p.get('type') || x.type === p.get('type')) && (!p.get('status') || x.status === p.get('status')) && (!p.get('site') || x.site_id === p.get('site'))
+      && (!p.get('q') || x.title.toLowerCase().includes(p.get('q')!.toLowerCase())))
+    .map((x) => ({ ...x, site_name: siteName(x.site_id), author_name: USER.name }))
+    .sort((a, b) => String(b.published_at ?? b.publish_at ?? b.updated_at).localeCompare(String(a.published_at ?? a.publish_at ?? a.updated_at)))],
+  ['GET', /^\/api\/posts\/([^/]+)$/, (m) => { const x = posts.find((y) => y.id === m[1]); if (!x) throw new Error('not_found'); return { ...x, site_name: siteName(x.site_id) }; }],
+  ['POST', /^\/api\/posts$/, (_m, _p, b) => { const x = savePost({ id: id(), views: 0, excerpt: null, author_id: USER.id }, b); posts.unshift(x); return x; }],
+  ['PATCH', /^\/api\/posts\/([^/]+)$/, (m, _p, b) => savePost(posts.find((y) => y.id === m[1]), b)],
+  ['DELETE', /^\/api\/posts\/([^/]+)$/, (m) => { posts.splice(posts.findIndex((y) => y.id === m[1]), 1); return { ok: true }; }],
+  ['GET', /^\/api\/blocks$/, () => blocks.map((b) => ({ ...b, site_name: siteName(b.site_id) }))],
+  ['POST', /^\/api\/blocks$/, (_m, _p, b) => { if (blocks.some((x) => x.site_id === b.site_id && x.key === b.key)) throw new Error('key_taken'); const x = { id: id(), ...b }; blocks.push(x); return x; }],
+  ['PATCH', /^\/api\/blocks\/([^/]+)$/, (m, _p, b) => Object.assign(blocks.find((x) => x.id === m[1]), b)],
+  ['DELETE', /^\/api\/blocks\/([^/]+)$/, (m) => { blocks.splice(blocks.findIndex((x) => x.id === m[1]), 1); return { ok: true }; }],
 
   ['GET', /^\/api\/orders$/, (_m, p) => {
     const st = p.get('status'); const q = (p.get('q') ?? '').toLowerCase();

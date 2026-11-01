@@ -13,6 +13,7 @@ import trackRoutes from './routes/track.js';
 import publicApiRoutes from './routes/publicApi.js';
 import crmRoutes from './routes/crm.js';
 import analyticsRoutes from './routes/analytics.js';
+import contentRoutes, { publishDue } from './routes/content.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' }, trustProxy: true, bodyLimit: 1024 * 1024 });
@@ -42,13 +43,18 @@ export async function buildApp() {
   await app.register(publicApiRoutes);
   await app.register(crmRoutes);
   await app.register(analyticsRoutes);
+  await app.register(contentRoutes);
 
   // Раздача собранной панели (web/dist), если она есть
   if (existsSync(config.webDist)) {
-    await app.register(fastifyStatic, { root: config.webDist, wildcard: false });
-    app.setNotFoundHandler((req, reply) =>
-      req.method === 'GET' && !req.url.startsWith('/api/') ? reply.sendFile('index.html') : reply.code(404).send({ error: 'not_found' }),
-    );
+    await app.register(fastifyStatic, { root: config.webDist });
+    // SPA: любые GET-адреса панели отдают index.html, но не API и не отсутствующие файлы (.js/.css…)
+    app.setNotFoundHandler((req, reply) => {
+      const path = req.url.split('?')[0];
+      return req.method === 'GET' && !path.startsWith('/api/') && !/\.[a-z0-9]+$/i.test(path)
+        ? reply.sendFile('index.html')
+        : reply.code(404).send({ error: 'not_found' });
+    });
   }
   return app;
 }
@@ -57,4 +63,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await migrate();
   const app = await buildApp();
   await app.listen({ port: config.port, host: config.host });
+  // Планировщик публикаций: выкладывает запланированные материалы в срок
+  const tick = () => publishDue().then((n) => n && app.log.info(`published ${n} scheduled post(s)`)).catch((e) => app.log.error(e));
+  tick();
+  setInterval(tick, 30_000).unref();
 }
