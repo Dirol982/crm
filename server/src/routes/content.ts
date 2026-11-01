@@ -9,6 +9,7 @@ import { one, pool, q } from '../lib/db.js';
 import { requireAuth, requireRole } from '../lib/auth.js';
 import { config } from '../lib/config.js';
 import { cleanHtml, escapeXml, slugify, textExcerpt } from '../lib/content.js';
+import { deliveriesFor, processDeliveries, syncDeliveries } from './channels.js';
 
 const STATUSES = ['idea', 'draft', 'review', 'scheduled', 'published', 'archived'] as const;
 const IMAGE_TYPES: Record<string, string> = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif' };
@@ -26,6 +27,8 @@ const postBody = z.object({
   publish_at: z.string().datetime({ offset: true }).optional().nullable(),
   seo_title: z.string().max(300).optional().nullable(),
   seo_description: z.string().max(500).optional().nullable(),
+  social_text: z.string().max(4000).optional().nullable(),
+  channels: z.array(z.string().uuid()).max(20).optional(), // куда кросспостить при публикации
 });
 
 const blockBody = z.object({
@@ -84,6 +87,13 @@ export default async function contentRoutes(app: FastifyInstance) {
   const read = { preHandler: requireAuth };
   const write = { preHandler: requireRole('manager') };
 
+  /** После сохранения: обновить список соцсетей и сразу отправить, если материал уже опубликован */
+  const afterSave = async (post: any, channels?: string[]) => {
+    if (channels) await syncDeliveries(post.tenant_id, post.id, channels);
+    if (post.status === 'published') setImmediate(() => processDeliveries(app.log).catch((e) => app.log.error(e)));
+    return { ...post, deliveries: await deliveriesFor(post.id) };
+  };
+
   // ---------------- Публикации ----------------
   app.get('/api/posts', read, async (req) => {
     const f = z.object({
@@ -126,7 +136,8 @@ export default async function contentRoutes(app: FastifyInstance) {
        FROM posts p JOIN sites s ON s.id=p.site_id WHERE p.id=$1 AND p.tenant_id=$2`,
       [(req.params as any).id, req.user.tid],
     );
-    return p ?? reply.code(404).send({ error: 'not_found' });
+    if (!p) return reply.code(404).send({ error: 'not_found' });
+    return { ...p, deliveries: await deliveriesFor(p.id) };
   });
 
   app.post('/api/posts', write, async (req) => {
@@ -134,12 +145,13 @@ export default async function contentRoutes(app: FastifyInstance) {
     await assertSite(req.user.tid, b.site_id);
     const s = schedule(b.status, b.publish_at, null);
     const slug = await uniqueSlug(b.site_id, b.type, b.slug || b.title);
-    return one(
-      `INSERT INTO posts(tenant_id,site_id,type,title,slug,excerpt,content,cover_url,tags,status,publish_at,published_at,seo_title,seo_description,author_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+    const post = await one(
+      `INSERT INTO posts(tenant_id,site_id,type,title,slug,excerpt,content,cover_url,tags,status,publish_at,published_at,seo_title,seo_description,author_id,social_text)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
       [req.user.tid, b.site_id, b.type, b.title, slug, b.excerpt || null, cleanHtml(b.content), b.cover_url ?? null, b.tags,
-        s.status, s.publish_at, s.published_at, b.seo_title || null, b.seo_description || null, req.user.uid],
+        s.status, s.publish_at, s.published_at, b.seo_title || null, b.seo_description || null, req.user.uid, b.social_text || null],
     );
+    return afterSave(post, b.channels);
   });
 
   app.patch('/api/posts/:id', write, async (req, reply) => {
@@ -152,13 +164,14 @@ export default async function contentRoutes(app: FastifyInstance) {
     const pa = m.publish_at instanceof Date ? m.publish_at.toISOString() : m.publish_at;
     const s = schedule(m.status, pa, cur.published_at ? new Date(cur.published_at).toISOString() : null);
     const slug = b.slug !== undefined || b.site_id || b.type ? await uniqueSlug(m.site_id, m.type, b.slug || cur.slug || m.title, id) : cur.slug;
-    return one(
+    const post = await one(
       `UPDATE posts SET site_id=$3, type=$4, title=$5, slug=$6, excerpt=$7, content=$8, cover_url=$9, tags=$10, status=$11,
-         publish_at=$12, published_at=$13, seo_title=$14, seo_description=$15, updated_at=now()
+         publish_at=$12, published_at=$13, seo_title=$14, seo_description=$15, social_text=$16, updated_at=now()
        WHERE id=$1 AND tenant_id=$2 RETURNING *`,
       [id, req.user.tid, m.site_id, m.type, m.title, slug, m.excerpt || null, b.content !== undefined ? cleanHtml(b.content) : cur.content,
-        m.cover_url || null, m.tags, s.status, s.publish_at, s.published_at, m.seo_title || null, m.seo_description || null],
+        m.cover_url || null, m.tags, s.status, s.publish_at, s.published_at, m.seo_title || null, m.seo_description || null, m.social_text || null],
     );
+    return afterSave(post, b.channels);
   });
 
   app.delete('/api/posts/:id', write, async (req, reply) => {

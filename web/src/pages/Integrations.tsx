@@ -40,6 +40,7 @@ export default function Integrations() {
             </label>
           )}
         </div>
+        {can('admin') && <PostUrl key={s.id} site={s} onSaved={refresh} />}
       </Card>
 
       <Card>
@@ -146,5 +147,27 @@ function AddSite({ onClose, onDone }: { onClose: () => void; onDone: () => void 
         <div className="row"><span className="spacer" /><button type="button" className="btn" onClick={onClose}>Отмена</button><button className="btn primary">Создать</button></div>
       </form>
     </Modal>
+  );
+}
+
+/** Шаблон адреса статьи — для ссылок из соцсетей, RSS и уведомлений */
+function PostUrl({ site, onSaved }: { site: any; onSaved: () => void }) {
+  const [v, setV] = useState(site.post_url_template ?? '');
+  const [state, setState] = useState<'' | 'ok' | 'err'>('');
+  const save = async () => {
+    try { await api(`/api/sites/${site.id}`, { method: 'PATCH', body: { post_url_template: v } }); setState('ok'); onSaved(); }
+    catch { setState('err'); }
+  };
+  return (
+    <label className="field" style={{ marginTop: 12 }}>Адрес статьи на сайте (для ссылок из соцсетей и RSS)
+      <div className="row">
+        <input value={v} onChange={(e) => { setV(e.target.value); setState(''); }} placeholder={`https://${site.domain ?? 'site.ru'}/blog/{slug}`} style={{ flex: 1 }} />
+        <button className="btn sm" onClick={save}>Сохранить</button>
+      </div>
+      <span className="sub" style={{ color: state === 'err' ? 'var(--bad)' : undefined }}>
+        {state === 'ok' ? 'Сохранено ✓' : state === 'err' ? 'Нужен полный адрес с {slug}, например https://site.ru/blog/{slug}' :
+          `{slug} заменится на адрес статьи. Если пусто — ${site.domain ? `https://${site.domain}/?post=…` : 'ссылка не добавляется (укажите домен сайта)'}`}
+      </span>
+    </label>
   );
 }

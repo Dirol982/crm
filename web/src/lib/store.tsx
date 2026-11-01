@@ -8,7 +8,7 @@ export interface Me {
   role: 'owner' | 'admin' | 'manager' | 'viewer';
   workspaces: { id: string; name: string; role: string }[];
 }
-export interface Site { id: string; name: string; domain: string | null; public_key: string; secret_key?: string; snippet: string; api_url: string }
+export interface Site { id: string; name: string; domain: string | null; post_url_template?: string | null; public_key: string; secret_key?: string; snippet: string; api_url: string }
 
 export type Preset = '7d' | '30d' | '90d' | 'month' | 'custom';
 export interface Range { preset: Preset; from: string; to: string }
