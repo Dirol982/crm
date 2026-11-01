@@ -1,4 +1,4 @@
-name: Демо на GitHub Pages
+name: Лендинг и демо на GitHub Pages
 
 on:
   push:
@@ -29,10 +29,12 @@ jobs:
       - run: npx tsc --noEmit && npx vite build --mode demo --outDir dist-demo
         working-directory: web
         env:
-          BASE_PATH: /${{ github.event.repository.name }}/
+          BASE_PATH: /${{ github.event.repository.name }}/app/
+      # Лендинг на главной, демо панели — в /app/
+      - run: mkdir -p site && cp -r landing/. site/ && cp -r web/dist-demo site/app
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web/dist-demo
+          path: site
   deploy:
     needs: build
     runs-on: ubuntu-latest

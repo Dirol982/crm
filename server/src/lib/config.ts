@@ -7,6 +7,8 @@ export const config = {
   publicUrl: (process.env.PUBLIC_URL ?? 'http://localhost:3000').replace(/\/$/, ''),
   // Папка со сборкой фронтенда (web/dist); если есть — сервер раздаёт её
   webDist: process.env.WEB_DIST ?? new URL('../../../web/dist', import.meta.url).pathname,
+  // Лендинг (landing/) — на главной странице домена
+  landingDir: process.env.LANDING_DIR ?? new URL('../../../landing', import.meta.url).pathname,
   corsOrigins: (process.env.CORS_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean),
   allowSignup: process.env.ALLOW_SIGNUP !== 'false',
 };

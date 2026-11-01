@@ -16,13 +16,14 @@ RUN npm run build && npm prune --omit=dev
 
 # --- итоговый образ ---
 FROM node:22-alpine
-ENV NODE_ENV=production PORT=3000 WEB_DIST=/app/web/dist UPLOAD_DIR=/app/uploads
+ENV NODE_ENV=production PORT=3000 WEB_DIST=/app/web/dist LANDING_DIR=/app/landing UPLOAD_DIR=/app/uploads
 WORKDIR /app
 COPY --from=server /app/server/node_modules server/node_modules
 COPY --from=server /app/server/dist server/dist
 COPY --from=server /app/server/package.json server/package.json
 COPY server/migrations server/migrations
 COPY tracker tracker
+COPY landing landing
 COPY --from=web /app/web/dist web/dist
 RUN mkdir -p /app/uploads && chown node:node /app/uploads
 USER node
