@@ -9,9 +9,9 @@ const NAV: [string, string, string][][] = [
   [['/', 'Сводка', 'dashboard'], ['/traffic', 'Источники', 'traffic'], ['/behavior', 'Поведение', 'behavior'], ['/sales', 'Продажи', 'sales']],
   [['/contacts', 'Клиенты', 'contacts'], ['/deals', 'Сделки', 'deals'], ['/tasks', 'Задачи', 'tasks']],
   [['/content', 'Публикации', 'content'], ['/calendar', 'Календарь', 'calendar'], ['/blocks', 'Блоки сайта', 'blocks'], ['/channels', 'Соцсети', 'share']],
-  [['/integrations', 'Подключение', 'integrations'], ['/settings', 'Настройки', 'settings']],
+  [['/integrations', 'Подключение', 'integrations'], ['/billing', 'Тариф и оплата', 'card'], ['/settings', 'Настройки', 'settings']],
 ];
-const SECTIONS = ['Аналитика', 'CRM', 'Сайт', 'Компания'];
+const SECTIONS = ['Аналитика', 'CRM', 'Сайт', 'Компания', 'Владелец'];
 
 export function Layout() {
   const { me, logout } = useStore();
@@ -26,7 +26,7 @@ export function Layout() {
           </div>
           Пульс CRM
         </div>
-        {NAV.map((items, i) => (
+        {[...NAV, ...(me?.is_superadmin ? [[['/platform', 'Платформа', 'platform']]] : [])].map((items, i) => (
           <nav className="nav" key={i}>
             <div className="nav-section">{SECTIONS[i]}</div>
             {items.map(([to, label, icon]) => (
@@ -55,6 +55,7 @@ export function Layout() {
               <b>Демо-версия.</b> Данные сгенерированы для примера, изменения не сохраняются.
             </div>
           )}
+          <BillingBanner />
           <Outlet />
         </main>
       </div>
@@ -86,6 +87,23 @@ export function PageHeader({ title, filters = true, children }: { title: string;
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Напоминание об оплате: заканчивается пробный период / оплата, превышен срок */
+function BillingBanner() {
+  const { me, can } = useStore();
+  const loc = useLocation();
+  const b = me?.billing;
+  if (!b || loc.pathname === '/billing') return null;
+  let text = '';
+  if (b.status === 'trial' && (b.days_left ?? 99) <= 3) text = `Пробный период заканчивается через ${b.days_left} дн.`;
+  else if (b.status === 'grace') text = `Оплата закончилась. Доступ сохранится ещё ${b.days_left} дн.`;
+  if (!text) return null;
+  return (
+    <div className="demo-banner" style={{ borderColor: 'var(--warn)' }}>
+      <b>{text}</b> {can('admin') ? <NavLink to="/billing">Выбрать тариф →</NavLink> : 'Попросите владельца продлить тариф.'}
     </div>
   );
 }

@@ -205,6 +205,24 @@ function deliverPublished() {
   }
 }
 
+// ---------------- Тарифы (демо: оплата имитируется) ----------------
+const PLANS_DEMO = [
+  { id: 'start', name: 'Старт', price: 990, visits: 10000, sites: 1, users: 2, note: 'Услуги, небольшой магазин' },
+  { id: 'business', name: 'Бизнес', price: 2990, visits: 100000, sites: 3, users: 10, note: 'Магазин с рекламой и соцсетями' },
+  { id: 'pro', name: 'Про', price: 6990, visits: 500000, sites: 10, users: 1000, note: 'Несколько направлений, API' },
+  { id: 'agency', name: 'Агентство', price: 14990, visits: 1000000, sites: 30, users: 1000, note: 'Веб-студии: много клиентов' },
+].map((p) => ({ ...p, price_month: p.price, price_year: Math.round(p.price * 12 * 0.8) }));
+const billing: any = { plan: 'business', trial_ends_at: new Date(now + 9 * DAY).toISOString(), paid_until: null as string | null, period: 'month', auto_renew: true, card: null as string | null, email: null };
+const payments: any[] = [];
+function billingState() {
+  const lim = (id: string) => { const p = PLANS_DEMO.find((x) => x.id === id)!; return { visits: p.visits, sites: p.sites, users: p.users }; };
+  if (billing.paid_until && Date.parse(billing.paid_until) > Date.now()) {
+    return { status: 'active', plan: billing.plan, limits: lim(billing.plan), trial_ends_at: billing.trial_ends_at, paid_until: billing.paid_until, days_left: Math.ceil((Date.parse(billing.paid_until) - Date.now()) / DAY) };
+  }
+  return { status: 'trial', plan: 'business', limits: lim('business'), trial_ends_at: billing.trial_ends_at, paid_until: null, days_left: Math.ceil((Date.parse(billing.trial_ends_at) - Date.now()) / DAY) };
+}
+const visitsThisMonth = () => { const m = new Date(); m.setDate(1); m.setHours(0, 0, 0, 0); return sessions.filter((x) => x.start >= m.getTime()).length; };
+
 const siteName = (sid: string) => sites.find((s) => s.id === sid)?.name ?? '';
 function savePost(p: any, b: any) {
   const { channels: chosen, ...rest } = b;
@@ -270,7 +288,45 @@ function group<T>(arr: T[], key: (t: T) => string) {
 
 const handlers: [string, RegExp, (m: RegExpMatchArray, p: URLSearchParams, body: any) => any][] = [
   ['POST', /^\/api\/auth\/(login|signup|switch)$/, () => ({ token: 'demo' })],
-  ['GET', /^\/api\/me$/, () => ({ user: USER, tenant, role: 'owner', workspaces: [{ id: tenant.id, name: tenant.name, role: 'owner' }] })],
+  ['GET', /^\/api\/me$/, () => ({ user: USER, tenant, role: 'owner', workspaces: [{ id: tenant.id, name: tenant.name, role: 'owner' }], billing: billingState(), is_superadmin: false })],
+  ['GET', /^\/api\/billing$/, () => ({
+    enabled: true, invoices: true, state: billingState(), year_discount: 0.2, plans: PLANS_DEMO, payments,
+    usage: { visits: visitsThisMonth(), sites: sites.length, users: team.length },
+    settings: { auto_renew: billing.auto_renew, payment_method_title: billing.card, billing_email: billing.email, billing_period: billing.period },
+  })],
+  ['POST', /^\/api\/billing\/checkout$/, (_m, _p, b) => {
+    const pl = PLANS_DEMO.find((x) => x.id === b.plan)!;
+    const pay = { id: id(), provider: 'yookassa', plan: b.plan, period: b.period, amount: b.period === 'year' ? pl.price_year : pl.price_month, status: 'pending', is_renewal: false, created_at: new Date().toISOString(), paid_at: null, error: null, company: null };
+    payments.unshift(pay);
+    return { id: pay.id, confirmation_url: `#/billing?payment=${pay.id}` }; // в демо сразу «возвращаемся» с оплаты
+  }],
+  ['POST', /^\/api\/billing\/payments\/([^/]+)\/refresh$/, (m) => {
+    const pay = payments.find((x) => x.id === m[1]);
+    if (pay && pay.status === 'pending') {
+      Object.assign(pay, { status: 'succeeded', paid_at: new Date().toISOString() });
+      const from = Math.max(Date.now(), billing.paid_until ? Date.parse(billing.paid_until) : 0);
+      const until = new Date(from); if (pay.period === 'year') until.setFullYear(until.getFullYear() + 1); else until.setMonth(until.getMonth() + 1);
+      Object.assign(billing, { plan: pay.plan, period: pay.period, paid_until: until.toISOString(), card: 'Карта •••• 4242' });
+    }
+    return { status: pay?.status ?? 'canceled', state: billingState() };
+  }],
+  ['PATCH', /^\/api\/billing\/settings$/, (_m, _p, b) => {
+    if (b.auto_renew !== undefined) billing.auto_renew = b.auto_renew;
+    if (b.billing_email !== undefined) billing.email = b.billing_email || null;
+    if (b.remove_card) billing.card = null;
+    return {};
+  }],
+  ['POST', /^\/api\/billing\/invoice$/, (_m, _p, b) => {
+    const pl = PLANS_DEMO.find((x) => x.id === b.plan)!;
+    const pay = { id: id(), provider: 'invoice', plan: b.plan, period: b.period, amount: b.period === 'year' ? pl.price_year : pl.price_month, status: 'pending', is_renewal: false, created_at: new Date().toISOString(), paid_at: null, error: null, company: b.company };
+    payments.unshift(pay);
+    return pay;
+  }],
+  ['GET', /^\/api\/billing\/invoice\/([^/]+)$/, (m) => {
+    const pay = payments.find((x) => x.id === m[1]);
+    return { ...pay, number: payments.filter((x) => x.provider === 'invoice').length, plan_name: PLANS_DEMO.find((x) => x.id === pay.plan)!.name,
+      seller: { name: 'ООО «Пример»', inn: '7700000000', kpp: '770001001', address: 'г. Москва, ул. Примерная, д. 1', bank: 'АО «Банк»', bik: '044500000', account: '40702810000000000000', corr: '30101810000000000000' } };
+  }],
   ['PATCH', /^\/api\/tenant$/, (_m, _p, b) => Object.assign(tenant, b)],
   ['GET', /^\/api\/sites$/, () => sites.map((s) => ({ ...s, snippet: `<script async src="https://crm.example.com/t.js" data-key="${s.public_key}"></script>`, api_url: 'https://crm.example.com/api/v1' }))],
   ['PATCH', /^\/api\/sites\/([^/]+)$/, (m, _p, b) => Object.assign(sites.find((x) => x.id === m[1])!, b)],

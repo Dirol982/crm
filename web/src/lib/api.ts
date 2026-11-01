@@ -31,6 +31,8 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
     setToken(null);
     location.hash = '#/login';
   }
+  // Аккаунт не оплачен — отправляем на страницу оплаты
+  if (res.status === 402 && !location.hash.startsWith('#/billing')) location.hash = '#/billing';
   const data = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(res.status, data?.error ?? 'error');
   return data as T;
