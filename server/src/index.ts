@@ -14,6 +14,7 @@ import publicApiRoutes from './routes/publicApi.js';
 import crmRoutes from './routes/crm.js';
 import analyticsRoutes from './routes/analytics.js';
 import contentRoutes, { publishDue } from './routes/content.js';
+import channelRoutes, { processDeliveries } from './routes/channels.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' }, trustProxy: true, bodyLimit: 1024 * 1024 });
@@ -44,6 +45,7 @@ export async function buildApp() {
   await app.register(crmRoutes);
   await app.register(analyticsRoutes);
   await app.register(contentRoutes);
+  await app.register(channelRoutes);
 
   // Раздача собранной панели (web/dist), если она есть
   if (existsSync(config.webDist)) {
@@ -64,7 +66,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const app = await buildApp();
   await app.listen({ port: config.port, host: config.host });
   // Планировщик публикаций: выкладывает запланированные материалы в срок
-  const tick = () => publishDue().then((n) => n && app.log.info(`published ${n} scheduled post(s)`)).catch((e) => app.log.error(e));
+  // и отправляет их в подключённые Telegram-каналы и сообщества VK
+  const tick = () => publishDue()
+    .then((n) => n && app.log.info(`published ${n} scheduled post(s)`))
+    .then(() => processDeliveries(app.log))
+    .catch((e) => app.log.error(e));
   tick();
   setInterval(tick, 30_000).unref();
 }

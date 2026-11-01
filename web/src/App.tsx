@@ -5,6 +5,7 @@ import { StoreProvider, useStore } from './lib/store';
 import Behavior from './pages/Behavior';
 import Blocks from './pages/Blocks';
 import Calendar from './pages/Calendar';
+import Channels from './pages/Channels';
 import Content from './pages/Content';
 import PostEditor from './pages/PostEditor';
 import ContactPage from './pages/ContactPage';
@@ -44,6 +45,7 @@ function Routed() {
         <Route path="content/:id" element={<PostEditor />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="blocks" element={<Blocks />} />
+        <Route path="channels" element={<Channels />} />
         <Route path="integrations" element={<Integrations />} />
         <Route path="settings" element={<Settings />} />
       </Route>

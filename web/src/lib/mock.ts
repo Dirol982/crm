@@ -179,8 +179,36 @@ const blocks: any[] = [
   { id: id(), site_id: sites[0].id, key: 'footer-note', title: 'Режим работы', html: '<p>Пн–Вс, 10:00–21:00 · +7 495 000-00-00</p>', active: true, starts_at: null, ends_at: null },
   { id: id(), site_id: sites[0].id, key: 'bf-banner', title: 'Баннер «Чёрная пятница»', html: '<p><strong>Чёрная пятница</strong> — скидки до 60%</p>', active: true, starts_at: new Date(now + 26 * DAY).toISOString(), ends_at: new Date(now + 30 * DAY).toISOString() },
 ];
+const channels: any[] = [
+  { id: id(), type: 'telegram', name: 'Канал магазина', target: '@shop_demo', secret_mask: '7012…k9Q', active: true, created_at: new Date(now - 30 * DAY).toISOString() },
+  { id: id(), type: 'vk', name: 'Группа ВКонтакте', target: '218000000', secret_mask: 'vk1.…f3a', active: true, created_at: new Date(now - 30 * DAY).toISOString() },
+];
+const deliveries: any[] = [];
+let extId = 300;
+const sentUrl = (c: any) => (c.type === 'telegram' ? `https://t.me/${c.target.slice(1)}/${++extId}` : `https://vk.com/wall-${c.target}_${++extId}`);
+for (const p of posts.filter((x) => x.type === 'post' && ['published', 'scheduled'].includes(x.status))) {
+  for (const c of channels) {
+    const sent = p.status === 'published';
+    deliveries.push({ id: id(), post_id: p.id, channel_id: c.id, status: sent ? 'sent' : 'pending', attempts: sent ? 1 : 0, external_url: sent ? sentUrl(c) : null, error: null, sent_at: sent ? p.published_at : null, next_attempt_at: p.publish_at, created_at: p.updated_at });
+  }
+}
+const deliveriesFor = (postId: string) => deliveries.filter((d) => d.post_id === postId).map((d) => {
+  const c = channels.find((x) => x.id === d.channel_id)!;
+  return { ...d, channel_name: c.name, type: c.type };
+});
+/** В демо «отправка» мгновенная */
+function deliverPublished() {
+  for (const d of deliveries) {
+    const p = posts.find((x) => x.id === d.post_id);
+    const c = channels.find((x) => x.id === d.channel_id);
+    if (d.status === 'pending' && p?.status === 'published' && c?.active) Object.assign(d, { status: 'sent', attempts: 1, external_url: sentUrl(c), sent_at: new Date().toISOString() });
+  }
+}
+
 const siteName = (sid: string) => sites.find((s) => s.id === sid)?.name ?? '';
 function savePost(p: any, b: any) {
+  const { channels: chosen, ...rest } = b;
+  b = rest;
   Object.assign(p, b);
   if (b.title && !p.slug) p.slug = slugify(b.title);
   if (b.slug === null) p.slug = slugify(p.title);
@@ -190,7 +218,17 @@ function savePost(p: any, b: any) {
   } else if (p.status === 'published') p.published_at = p.published_at ?? new Date().toISOString();
   else if (p.status !== 'archived') p.published_at = null;
   p.updated_at = new Date().toISOString();
-  return p;
+  if (chosen) {
+    for (let i = deliveries.length - 1; i >= 0; i--) {
+      const d = deliveries[i];
+      if (d.post_id === p.id && ['pending', 'failed'].includes(d.status) && !chosen.includes(d.channel_id)) deliveries.splice(i, 1);
+    }
+    for (const cid of chosen) if (!deliveries.some((d) => d.post_id === p.id && d.channel_id === cid)) {
+      deliveries.push({ id: id(), post_id: p.id, channel_id: cid, status: 'pending', attempts: 0, external_url: null, error: null, sent_at: null, next_attempt_at: p.publish_at, created_at: new Date().toISOString() });
+    }
+  }
+  deliverPublished();
+  return { ...p, deliveries: deliveriesFor(p.id) };
 }
 
 // ---------------- Аналитика ----------------
@@ -235,6 +273,7 @@ const handlers: [string, RegExp, (m: RegExpMatchArray, p: URLSearchParams, body:
   ['GET', /^\/api\/me$/, () => ({ user: USER, tenant, role: 'owner', workspaces: [{ id: tenant.id, name: tenant.name, role: 'owner' }] })],
   ['PATCH', /^\/api\/tenant$/, (_m, _p, b) => Object.assign(tenant, b)],
   ['GET', /^\/api\/sites$/, () => sites.map((s) => ({ ...s, snippet: `<script async src="https://crm.example.com/t.js" data-key="${s.public_key}"></script>`, api_url: 'https://crm.example.com/api/v1' }))],
+  ['PATCH', /^\/api\/sites\/([^/]+)$/, (m, _p, b) => Object.assign(sites.find((x) => x.id === m[1])!, b)],
   ['POST', /^\/api\/sites$/, (_m, _p, b) => { const s = { id: id(), name: b.name, domain: b.domain || null, public_key: 'pk_demo_' + rnd(1000, 9999), secret_key: 'sk_demo_' + 'z'.repeat(40), created_at: new Date().toISOString() }; sites.push(s); return s; }],
   ['POST', /^\/api\/sites\/([^/]+)\/rotate-secret$/, (m) => { const s = sites.find((x) => x.id === m[1])!; s.secret_key = 'sk_demo_' + rnd(1e8, 9e8) + 'z'.repeat(31); return s; }],
   ['DELETE', /^\/api\/sites\/([^/]+)$/, (m) => { sites.splice(sites.findIndex((x) => x.id === m[1]), 1); return { ok: true }; }],
@@ -340,8 +379,22 @@ const handlers: [string, RegExp, (m: RegExpMatchArray, p: URLSearchParams, body:
       && (!p.get('q') || x.title.toLowerCase().includes(p.get('q')!.toLowerCase())))
     .map((x) => ({ ...x, site_name: siteName(x.site_id), author_name: USER.name }))
     .sort((a, b) => String(b.published_at ?? b.publish_at ?? b.updated_at).localeCompare(String(a.published_at ?? a.publish_at ?? a.updated_at)))],
-  ['GET', /^\/api\/posts\/([^/]+)$/, (m) => { const x = posts.find((y) => y.id === m[1]); if (!x) throw new Error('not_found'); return { ...x, site_name: siteName(x.site_id) }; }],
-  ['POST', /^\/api\/posts$/, (_m, _p, b) => { const x = savePost({ id: id(), views: 0, excerpt: null, author_id: USER.id }, b); posts.unshift(x); return x; }],
+  ['GET', /^\/api\/posts\/([^/]+)$/, (m) => { const x = posts.find((y) => y.id === m[1]); if (!x) throw new Error('not_found'); return { ...x, site_name: siteName(x.site_id), deliveries: deliveriesFor(x.id) }; }],
+  ['GET', /^\/api\/channels$/, () => channels.map((c) => {
+    const ds = deliveries.filter((d) => d.channel_id === c.id);
+    return { ...c, sent: ds.filter((d) => d.status === 'sent').length, failed: ds.filter((d) => d.status === 'failed').length,
+      last_sent_at: ds.map((d) => d.sent_at).filter(Boolean).sort().pop() ?? null };
+  })],
+  ['POST', /^\/api\/channels$/, (_m, _p, b) => { const c = { id: id(), active: true, ...b, secret_mask: `${String(b.secret).slice(0, 4)}…${String(b.secret).slice(-3)}`, created_at: new Date().toISOString() }; delete c.secret; channels.push(c); return c; }],
+  ['PATCH', /^\/api\/channels\/([^/]+)$/, (m, _p, b) => { const c = channels.find((x) => x.id === m[1]); const { secret, ...rest } = b; Object.assign(c, rest); if (secret) c.secret_mask = `${secret.slice(0, 4)}…${secret.slice(-3)}`; return c; }],
+  ['DELETE', /^\/api\/channels\/([^/]+)$/, (m) => { channels.splice(channels.findIndex((x) => x.id === m[1]), 1); return { ok: true }; }],
+  ['POST', /^\/api\/channels\/([^/]+)\/test$/, (m) => { const c = channels.find((x) => x.id === m[1]); return { ok: true, info: c.type === 'telegram' ? `@demo_bot → ${c.name}` : c.name }; }],
+  ['GET', /^\/api\/deliveries$/, () => deliveries.map((d) => {
+    const p = posts.find((x) => x.id === d.post_id); const c = channels.find((x) => x.id === d.channel_id);
+    return p && c ? { ...d, channel_name: c.name, type: c.type, post_title: p.title, post_status: p.status, publish_at: p.publish_at } : null;
+  }).filter(Boolean).sort((a: any, b: any) => String(b.sent_at ?? b.publish_at).localeCompare(String(a.sent_at ?? a.publish_at)))],
+  ['POST', /^\/api\/deliveries\/([^/]+)\/retry$/, (m) => { const d = deliveries.find((x) => x.id === m[1]); Object.assign(d, { status: 'pending', error: null }); deliverPublished(); return { ok: true }; }],
+  ['POST', /^\/api\/posts$/, (_m, _p, b) => { const x = { id: id(), views: 0, excerpt: null, author_id: USER.id }; posts.unshift(x); return savePost(x, b); }],
   ['PATCH', /^\/api\/posts\/([^/]+)$/, (m, _p, b) => savePost(posts.find((y) => y.id === m[1]), b)],
   ['DELETE', /^\/api\/posts\/([^/]+)$/, (m) => { posts.splice(posts.findIndex((y) => y.id === m[1]), 1); return { ok: true }; }],
   ['GET', /^\/api\/blocks$/, () => blocks.map((b) => ({ ...b, site_name: siteName(b.site_id) }))],

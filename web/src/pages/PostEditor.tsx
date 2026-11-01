@@ -3,12 +3,14 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { Card, Empty, Loading } from '../components/ui';
 import { PostStatus } from '../components/PostStatus';
 import { RichEditor } from '../components/RichEditor';
+import { DeliveryStatus } from '../components/DeliveryStatus';
+import { NETWORK } from './Channels';
 import { api, uploadImage } from '../lib/api';
 import { date, fromLocalInput, num, toLocalInput } from '../lib/format';
 import { POST_STATUS } from '../lib/labels';
-import { useStore } from '../lib/store';
+import { useFetch, useStore } from '../lib/store';
 
-const EMPTY = { title: '', slug: '', excerpt: '', content: '', cover_url: '', tags: '', status: 'draft', publish_at: '', seo_title: '', seo_description: '', site_id: '', type: 'post' };
+const EMPTY = { title: '', slug: '', excerpt: '', content: '', cover_url: '', tags: '', status: 'draft', publish_at: '', seo_title: '', seo_description: '', site_id: '', type: 'post', social_text: '' };
 const ERR: Record<string, string> = { publish_at_required: 'Укажите дату и время публикации', validation: 'Проверьте поля: заголовок обязателен, обложка — ссылка на картинку' };
 
 export default function PostEditor() {
@@ -24,6 +26,8 @@ export default function PostEditor() {
   const loc = useLocation();
   const [savedAt, setSavedAt] = useState<Date | null>((loc.state as any)?.saved ? new Date() : null);
   const [dirty, setDirty] = useState(false);
+  const [channels, setChannels] = useState<string[]>([]);
+  const { data: allChannels } = useFetch<any[]>('/api/channels');
 
   useEffect(() => {
     if (isNew) {
@@ -34,9 +38,18 @@ export default function PostEditor() {
     api(`/api/posts/${id}`).then((p) => {
       setMeta(p);
       setF({ title: p.title, slug: p.slug, excerpt: p.excerpt ?? '', content: p.content ?? '', cover_url: p.cover_url ?? '', tags: (p.tags ?? []).join(', '),
-        status: p.status, publish_at: toLocalInput(p.publish_at), seo_title: p.seo_title ?? '', seo_description: p.seo_description ?? '', site_id: p.site_id, type: p.type });
+        status: p.status, publish_at: toLocalInput(p.publish_at), seo_title: p.seo_title ?? '', seo_description: p.seo_description ?? '', site_id: p.site_id, type: p.type, social_text: p.social_text ?? '' });
+      setChannels((p.deliveries ?? []).map((d: any) => d.channel_id));
     }).catch(() => setErr('not_found'));
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Отправка в соцсети идёт в фоне: пока есть «в очереди» / «отправляется» — обновляем статусы
+  const inFlight = !!meta?.id && meta?.status === 'published' && meta?.deliveries?.some((d: any) => (d.status === 'pending' && !d.error) || d.status === 'sending');
+  useEffect(() => {
+    if (!inFlight) return;
+    const t = setTimeout(() => api(`/api/posts/${meta.id}`).then((x) => setMeta((m: any) => ({ ...m, deliveries: x.deliveries }))).catch(() => {}), 2000);
+    return () => clearTimeout(t);
+  }, [inFlight, meta]);
 
   // Предупреждение о несохранённых изменениях
   useEffect(() => {
@@ -57,6 +70,8 @@ export default function PostEditor() {
       ...f, status: st, slug: f.slug || null, cover_url: f.cover_url || null,
       tags: f.tags.split(',').map((t) => t.trim()).filter(Boolean),
       publish_at: st === 'published' && !f.publish_at ? null : fromLocalInput(f.publish_at),
+      social_text: f.social_text || null,
+      channels,
     };
     try {
       const p = isNew ? await api('/api/posts', { method: 'POST', body }) : await api(`/api/posts/${id}`, { method: 'PATCH', body });
@@ -74,7 +89,8 @@ export default function PostEditor() {
   };
   const future = f.publish_at && new Date(f.publish_at) > new Date();
   const s = sites.find((x) => x.id === f.site_id);
-  const urlHint = s?.domain ? `${s.domain}/…?post=${f.slug || '…'}` : `?post=${f.slug || '…'}`;
+  const urlHint = s?.post_url_template?.includes('{slug}') ? s.post_url_template.replace('{slug}', f.slug || '…')
+    : s?.domain ? `${s.domain}/…?post=${f.slug || '…'}` : `?post=${f.slug || '…'}`;
 
   return (
     <div className="stack">
@@ -135,6 +151,47 @@ export default function PostEditor() {
               )}
             </div>
           </Card>
+
+          {f.type === 'post' && allChannels && (
+            <Card title="Соцсети" sub={allChannels.length ? 'Пост выйдет вместе со статьёй на сайте' : undefined}>
+              {!allChannels.length ? (
+                <div className="sub">Подключите Telegram-канал или сообщество VK в разделе <Link to="/channels">«Соцсети»</Link>, чтобы публиковать туда автоматически.</div>
+              ) : (
+                <div className="form">
+                  {allChannels.map((c) => {
+                    const d = meta?.deliveries?.find((x: any) => x.channel_id === c.id);
+                    const locked = d && ['sent', 'sending'].includes(d.status);
+                    return (
+                      <div key={c.id}>
+                        <label className="row" style={{ fontSize: 13, opacity: c.active ? 1 : 0.55 }}>
+                          <input type="checkbox" disabled={ro || locked || (!c.active && !channels.includes(c.id))} checked={channels.includes(c.id)}
+                            onChange={(e) => { setChannels(e.target.checked ? [...channels, c.id] : channels.filter((x) => x !== c.id)); setDirty(true); }} />
+                          <span className="dot" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: NETWORK[c.type]?.color }} />
+                          {c.name}{!c.active && ' (выключен)'}
+                        </label>
+                        {d && (
+                          <div className="row" style={{ marginLeft: 24, marginTop: 4 }}>
+                            <DeliveryStatus d={d} postStatus={f.status} />
+                            {d.external_url && <a className="sub" href={d.external_url} target="_blank" rel="noreferrer">пост ↗</a>}
+                            {d.status === 'failed' && !ro && <button className="btn sm" onClick={async () => {
+                              await api(`/api/deliveries/${d.id}/retry`, { method: 'POST' });
+                              api(`/api/posts/${id}`).then((x) => setMeta((m: any) => ({ ...m, deliveries: x.deliveries })));
+                            }}>Повторить</button>}
+                          </div>
+                        )}
+                        {d?.error && d.status !== 'sent' && <div className="sub" style={{ marginLeft: 24, color: 'var(--bad)' }}>{d.error}</div>}
+                      </div>
+                    );
+                  })}
+                  <label className="field">Текст поста (необязательно)
+                    <textarea value={f.social_text} onChange={(e) => set('social_text')(e.target.value)} readOnly={ro} maxLength={4000}
+                      placeholder="Если пусто — заголовок, анонс и ссылка на статью" />
+                    <span className="sub">Ссылка на статью добавится автоматически{f.cover_url ? ', в Telegram — с обложкой' : ''}.</span>
+                  </label>
+                </div>
+              )}
+            </Card>
+          )}
 
           <Card title="Обложка">
             <div className="form">
