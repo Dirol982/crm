@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Пульс CRM — откуда приходят деньги вашего бизнеса</title>
+<meta name="description" content="Сквозная аналитика, CRM, блог и автопостинг в Telegram и ВКонтакте в одном сервисе. Подключение одной строкой кода на любой сайт: Tilda, WordPress, InSales. 14 дней бесплатно.">
+<meta property="og:title" content="Пульс CRM — откуда приходят деньги вашего бизнеса">
+<meta property="og:description" content="Видно, какая реклама приносит выручку, а какая — только визиты. CRM, блог и соцсети в одной подписке.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="img/dashboard.jpg">
+<meta name="theme-color" content="#2a78d6">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232a78d6'/><path d='M8 22V14M14 22V9M20 22v-6M26 22V12' stroke='white' stroke-width='3' stroke-linecap='round'/></svg>">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #ffffff; --surface-2: #f2f1ed; --text: #0b0b0b; --text-2: #52514e; --muted: #898781;
+  --border: rgba(11,11,11,.1); --accent: #2a78d6; --accent-2: #1c5cab; --accent-soft: #e8f1fc; --good: #006300; --bad: #d03b3b;
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 40px rgba(16,24,40,.10);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; color: var(--text);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #232321; --text: #f0efec; --text-2: #c3c2b7; --border: rgba(255,255,255,.1);
+    --accent: #3987e5; --accent-2: #6da7ec; --accent-soft: #14253b; --good: #0ca30c; --bad: #e66767; --shadow: 0 12px 40px rgba(0,0,0,.5);
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--page); font-size: 17px; }
+a { color: var(--accent); }
+img { max-width: 100%; height: auto; display: block; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+h1, h2, h3 { letter-spacing: -0.02em; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5.2vw, 58px); font-weight: 750; }
+h2 { font-size: clamp(28px, 3.6vw, 40px); font-weight: 720; }
+h3 { font-size: 19px; font-weight: 650; }
+p { margin: 0; }
+.lead { font-size: clamp(18px, 2vw, 21px); color: var(--text-2); }
+.eyebrow { font-size: 14px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
+.sub { color: var(--text-2); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 22px; border-radius: 10px; font: inherit; font-weight: 650; font-size: 16px; text-decoration: none; border: 1px solid transparent; cursor: pointer; white-space: nowrap; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-2); }
+.btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
+.btn-ghost:hover { border-color: var(--muted); }
+.btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset: 2px; }
+section { padding: 96px 0; }
+.section-head { max-width: 720px; margin: 0 auto 48px; text-align: center; display: grid; gap: 14px; }
+
+/* шапка */
+header { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--page) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--border); }
+.nav { display: flex; align-items: center; gap: 28px; height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 750; font-size: 18px; color: var(--text); text-decoration: none; }
+.logo { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; }
+.nav-links { display: flex; gap: 24px; margin-left: 12px; }
+.nav-links a { color: var(--text-2); text-decoration: none; font-size: 15px; font-weight: 550; }
+.nav-links a:hover { color: var(--text); }
+.nav .spacer { flex: 1; }
+.nav .btn { padding: 9px 16px; font-size: 15px; }
+
+/* первый экран */
+.hero { padding: 80px 0 40px; text-align: center; }
+.hero .lead { max-width: 680px; margin: 22px auto 0; }
+.hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 34px; }
+.hero-note { margin-top: 14px; font-size: 14px; color: var(--muted); }
+.shot { margin: 56px auto 0; max-width: 1080px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--surface); }
+.shot-bar { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.shot-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+.logos { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 10px 26px; justify-content: center; align-items: center; color: var(--muted); font-size: 15px; font-weight: 600; }
+
+/* боли */
+.pains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.pain { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px; display: grid; gap: 10px; align-content: start; }
+.pain .q { font-size: 20px; font-weight: 680; letter-spacing: -0.01em; }
+.pain .a { color: var(--text-2); }
+.pain .a b { color: var(--text); }
+
+/* возможности */
+.feature { display: grid; grid-template-columns: 1fr 1.25fr; gap: 56px; align-items: center; padding: 40px 0; }
+.feature.flip { grid-template-columns: 1.25fr 1fr; }
+.feature.flip .feature-text { order: 2; }
+.feature-text { display: grid; gap: 16px; }
+.feature-text ul { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.feature-text li { padding-left: 28px; position: relative; color: var(--text-2); }
+.feature-text li::before { content: ''; position: absolute; left: 0; top: 7px; width: 16px; height: 10px; border-left: 2.5px solid var(--accent); border-bottom: 2.5px solid var(--accent); transform: rotate(-45deg); }
+.feature img { border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+/* как подключить */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: step; }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px; display: grid; gap: 10px; align-content: start; }
+.step::before { counter-increment: step; content: counter(step); width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 750; }
+.code { font: 13.5px/1.5 ui-monospace, Menlo, Consolas, monospace; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: nowrap; color: var(--text); }
+
+/* для кого */
+.who { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.who-card { border-radius: 14px; padding: 28px; background: var(--surface); border: 1px solid var(--border); display: grid; gap: 12px; align-content: start; }
+.who-card .tag { font-size: 13px; font-weight: 650; color: var(--accent); }
+
+/* тарифы */
+.toggle { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 4px; margin: 0 auto; }
+.toggle button { border: 0; background: none; font: inherit; font-size: 15px; font-weight: 600; padding: 8px 16px; border-radius: 7px; color: var(--text-2); cursor: pointer; }
+.toggle button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.toggle .save { color: var(--good); font-weight: 700; }
+.plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 32px; }
+.plan { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px 22px; display: flex; flex-direction: column; gap: 14px; position: relative; }
+.plan.hot { border: 2px solid var(--accent); }
+.plan .badge { position: absolute; top: -12px; left: 22px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+.plan .price { font-size: 34px; font-weight: 760; letter-spacing: -0.02em; }
+.plan .price small { font-size: 15px; font-weight: 500; color: var(--text-2); letter-spacing: 0; }
+.plan ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 15px; color: var(--text-2); }
+.plan ul b { color: var(--text); }
+.plan .btn { margin-top: auto; }
+.plans-note { text-align: center; margin-top: 22px; font-size: 15px; color: var(--text-2); }
+
+/* партнёры */
+.partner { background: var(--accent); color: #fff; border-radius: 20px; padding: 48px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: center; }
+.partner h2 { color: #fff; }
+.partner .lead { color: rgba(255,255,255,.88); }
+.partner-stats { display: grid; gap: 14px; }
+.partner-stat { background: rgba(255,255,255,.12); border-radius: 12px; padding: 16px 18px; }
+.partner-stat b { font-size: 28px; display: block; letter-spacing: -0.02em; }
+.partner .btn-ghost { background: #fff; color: var(--accent-2); border: 0; }
+
+/* вопросы */
+.faq { max-width: 800px; margin: 0 auto; display: grid; gap: 10px; }
+details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0 22px; }
+summary { cursor: pointer; padding: 18px 0; font-weight: 650; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: '+'; font-size: 22px; line-height: 1; color: var(--muted); }
+details[open] summary::after { content: '−'; }
+details p { padding: 0 0 18px; color: var(--text-2); }
+
+.final { text-align: center; display: grid; gap: 20px; justify-items: center; }
+footer { border-top: 1px solid var(--border); padding: 32px 0; color: var(--muted); font-size: 14px; }
+footer .wrap { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+footer a { color: var(--text-2); text-decoration: none; }
+
+@media (max-width: 960px) {
+  .nav-links { display: none; }
+  .pains, .steps, .who { grid-template-columns: 1fr; }
+  .plans { grid-template-columns: 1fr 1fr; }
+  .feature, .feature.flip { grid-template-columns: 1fr; gap: 28px; }
+  .feature.flip .feature-text { order: 0; }
+  .partner { grid-template-columns: 1fr; padding: 32px; }
+}
+@media (max-width: 600px) {
+  body { font-size: 16px; }
+  .wrap { padding: 0 16px; }
+  section { padding: 64px 0; }
+  .hero { padding: 48px 0 24px; }
+  .plans { grid-template-columns: 1fr; }
+  .nav .btn-ghost { display: none; }
+  .hero-cta .btn { width: 100%; }
+  .shot { max-width: 340px; margin-top: 40px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top"><span class="logo"><svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true"><path d="M8 22V14M14 22V9M20 22v-6M26 22V12" stroke="white" stroke-width="3.2" stroke-linecap="round"/></svg></span>Пульс CRM</a>
+    <nav class="nav-links" aria-label="Разделы">
+      <a href="#features">Возможности</a>
+      <a href="#how">Подключение</a>
+      <a href="#pricing">Тарифы</a>
+      <a href="#partners">Партнёрам</a>
+      <a href="#faq">Вопросы</a>
+    </nav>
+    <span class="spacer"></span>
+    <a class="btn btn-ghost" href="app/">Войти</a>
+    <a class="btn btn-primary" href="app/#/login?mode=signup">Попробовать</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <h1>Откуда приходят деньги —<br>видно с первой недели</h1>
+      <p class="lead">Пульс CRM показывает, какая реклама приносит выручку, а какая только визиты. Заявки с сайта сами становятся клиентами, а статьи выходят на сайте и в соцсетях по расписанию.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="app/#/login?mode=signup">Попробовать 14 дней бесплатно</a>
+        <a class="btn btn-ghost" href="https://dirol982.github.io/crm/app/">Посмотреть демо</a>
+      </div>
+      <p class="hero-note">Без карты и без программиста · подключение за 5 минут</p>
+      <div class="shot">
+        <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <picture>
+          <source media="(max-width: 600px)" srcset="img/mobile.jpg" width="780" height="1280">
+          <img src="img/dashboard.jpg" width="1440" height="900" alt="Сводка Пульс CRM: выручка, заказы, конверсия, визиты, график выручки по дням, воронка и источники денег">
+        </picture>
+      </div>
+      <div class="logos" aria-label="Работает с">
+        <span>Работает с</span><span>Tilda</span><span>WordPress</span><span>InSales</span><span>WooCommerce</span><span>1С-Битрикс</span><span>Telegram</span><span>ВКонтакте</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Три вопроса, на которые у бизнеса обычно нет ответа</h2>
+      </div>
+      <div class="pains">
+        <div class="pain">
+          <p class="q">«Какая реклама окупается?»</p>
+          <p class="a">Метрика показывает визиты, а не деньги. Пульс связывает каждый заказ с источником визита — <b>выручка и конверсия видны по каждой кампании</b>.</p>
+        </div>
+        <div class="pain">
+          <p class="q">«Куда делась заявка?»</p>
+          <p class="a">Заявки теряются в почте и мессенджерах. Здесь <b>форма на сайте сразу создаёт клиента</b> с источником, а менеджер получает задачу.</p>
+        </div>
+        <div class="pain">
+          <p class="q">«Кто выложит пост?»</p>
+          <p class="a">Статью нужно разместить на сайте, в Telegram и ВКонтакте. В Пульсе <b>пишете один раз</b> — материал выходит везде в назначенное время.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" style="padding-top: 24px">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Возможности</span>
+        <h2>Аналитика, CRM и контент в одной подписке</h2>
+        <p class="lead">Вместо трёх-четырёх сервисов, которые не знают друг о друге.</p>
+      </div>
+
+      <div class="feature">
+        <div class="feature-text">
+          <h3>Выручка по каждому источнику</h3>
+          <p class="sub">Яндекс Директ, поиск, соцсети, рассылки, партнёры — у каждого видно визиты, отказы, заказы и деньги.</p>
+          <ul>
+            <li>UTM-метки, переходы с рекламы и поиска определяются сами</li>
+            <li>Заказы с сайта, из магазина по API и офлайн-продажи — в одной выручке</li>
+            <li>Сравнение с прошлым периодом по каждому показателю</li>
+          </ul>
+        </div>
+        <img src="img/sources.jpg" width="1440" height="900" loading="lazy" alt="Источники трафика: визиты, конверсия и выручка по каналам и кампаниям">
+      </div>
+
+      <div class="feature flip">
+        <div class="feature-text">
+          <h3>Где уходят с сайта</h3>
+          <p class="sub">Страницы, на которых посетители чаще всего закрывают сайт, страницы входа с отказами, устройства и браузеры.</p>
+          <ul>
+            <li>Доля выходов по каждой странице</li>
+            <li>Время на странице и отказы по источникам</li>
+            <li>Кто на сайте прямо сейчас</li>
+          </ul>
+        </div>
+        <img src="img/exits.jpg" width="1440" height="900" loading="lazy" alt="Поведение на сайте: страницы выхода, устройства, браузеры">
+      </div>
+
+      <div class="feature">
+        <div class="feature-text">
+          <h3>Клиенты, сделки и задачи</h3>
+          <p class="sub">Простая CRM без недели внедрения: карточка клиента с историей заказов и всех визитов на сайт.</p>
+          <ul>
+            <li>Воронка сделок с перетаскиванием, свои этапы</li>
+            <li>Задачи менеджерам со сроками</li>
+            <li>Роли: владелец, администратор, менеджер, наблюдатель</li>
+          </ul>
+        </div>
+        <img src="img/deals.jpg" width="1440" height="900" loading="lazy" alt="Сделки: канбан-воронка по этапам">
+      </div>
+
+      <div class="feature flip">
+        <div class="feature-text">
+          <h3>Блог и календарь публикаций</h3>
+          <p class="sub">Статьи, новости и страницы сайта пишутся прямо в CRM и выходят по расписанию — без программиста и без входа в админку сайта.</p>
+          <ul>
+            <li>Визуальный редактор с фото и видео, SEO-поля</li>
+            <li>Календарь на месяц, перенос перетаскиванием</li>
+            <li>Баннеры и объявления с показом «с — по»</li>
+          </ul>
+        </div>
+        <img src="img/calendar.jpg" width="1440" height="900" loading="lazy" alt="Календарь публикаций на месяц">
+      </div>
+
+      <div class="feature">
+        <div class="feature-text">
+          <h3>Сразу в Telegram и ВКонтакте</h3>
+          <p class="sub">Отметьте каналы — пост с обложкой и ссылкой на статью выйдет в соцсетях в момент публикации на сайте.</p>
+          <ul>
+            <li>Telegram-каналы и сообщества ВКонтакте</li>
+            <li>Свой текст для соцсетей или автоматический анонс</li>
+            <li>Журнал отправок и повтор при сбоях</li>
+          </ul>
+        </div>
+        <img src="img/content.jpg" width="1440" height="900" loading="lazy" alt="Редактор публикации с отправкой в Telegram и ВКонтакте">
+      </div>
+    </div>
+  </section>
+
+  <section id="how" style="background: var(--surface-2)">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Подключение</span>
+        <h2>Пять минут — и статистика пошла</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>Регистрируетесь</h3>
+          <p class="sub">14 дней бесплатно на тарифе «Бизнес». Карта не нужна.</p>
+        </div>
+        <div class="step">
+          <h3>Вставляете одну строку</h3>
+          <p class="sub">В шапку сайта — на Tilda это одно поле в настройках.</p>
+          <div class="code">&lt;script src="…/t.js" data-key="pk_…"&gt;&lt;/script&gt;</div>
+        </div>
+        <div class="step">
+          <h3>Смотрите на деньги</h3>
+          <p class="sub">Заявки из форм приходят сразу, через неделю видно, какие источники приносят выручку.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Для кого</span>
+        <h2>Малый бизнес с сайтом и рекламой</h2>
+      </div>
+      <div class="who">
+        <div class="who-card">
+          <span class="tag">Интернет-магазины</span>
+          <h3>Перестаньте платить за рекламу, которая не продаёт</h3>
+          <p class="sub">Заказы связываются с кампаниями — сразу видно, куда добавить бюджет, а что выключить.</p>
+        </div>
+        <div class="who-card">
+          <span class="tag">Услуги с заявками</span>
+          <h3>Клиники, автосервисы, ремонт, юристы</h3>
+          <p class="sub">Ни одна заявка с сайта не теряется, а блог приводит клиентов из поиска.</p>
+        </div>
+        <div class="who-card">
+          <span class="tag">Веб-студии и фрилансеры</span>
+          <h3>Покажите клиенту, что принёс сайт</h3>
+          <p class="sub">Все клиенты в одном кабинете и регулярный доход с партнёрской программы.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" style="background: var(--surface-2)">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Тарифы</span>
+        <h2>Все возможности на любом тарифе</h2>
+        <p class="lead">Тарифы отличаются только объёмом: визитами, сайтами и сотрудниками.</p>
+      </div>
+      <div style="text-align:center">
+        <div class="toggle" role="group" aria-label="Период оплаты">
+          <button type="button" class="on" data-period="month">Помесячно</button>
+          <button type="button" data-period="year">За год <span class="save">−20%</span></button>
+        </div>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <h3>Старт</h3>
+          <div class="price" data-month="990" data-year="792">990 ₽<small> / месяц</small></div>
+          <ul><li><b>10 000</b> визитов в месяц</li><li><b>1</b> сайт</li><li><b>2</b> сотрудника</li></ul>
+          <p class="sub" style="font-size:15px">Услуги, небольшой магазин</p>
+          <a class="btn btn-ghost" href="app/#/login?mode=signup">Попробовать</a>
+        </div>
+        <div class="plan hot">
+          <span class="badge">Популярный</span>
+          <h3>Бизнес</h3>
+          <div class="price" data-month="2990" data-year="2392">2 990 ₽<small> / месяц</small></div>
+          <ul><li><b>100 000</b> визитов в месяц</li><li><b>3</b> сайта</li><li><b>10</b> сотрудников</li></ul>
+          <p class="sub" style="font-size:15px">Магазин с рекламой и соцсетями</p>
+          <a class="btn btn-primary" href="app/#/login?mode=signup">Попробовать</a>
+        </div>
+        <div class="plan">
+          <h3>Про</h3>
+          <div class="price" data-month="6990" data-year="5592">6 990 ₽<small> / месяц</small></div>
+          <ul><li><b>500 000</b> визитов в месяц</li><li><b>10</b> сайтов</li><li>Сотрудники <b>без лимита</b></li></ul>
+          <p class="sub" style="font-size:15px">Несколько направлений, API</p>
+          <a class="btn btn-ghost" href="app/#/login?mode=signup">Попробовать</a>
+        </div>
+        <div class="plan">
+          <h3>Агентство</h3>
+          <div class="price" data-month="14990" data-year="11992">14 990 ₽<small> / месяц</small></div>
+          <ul><li><b>1 000 000</b> визитов в месяц</li><li><b>30</b> сайтов клиентов</li><li>Сотрудники <b>без лимита</b></li></ul>
+          <p class="sub" style="font-size:15px">Веб-студии с десятками клиентов</p>
+          <a class="btn btn-ghost" href="app/#/login?mode=signup">Попробовать</a>
+        </div>
+      </div>
+      <p class="plans-note">14 дней бесплатно · оплата картой, через СБП или по счёту для юрлиц · отмена в любой момент</p>
+    </div>
+  </section>
+
+  <section id="partners">
+    <div class="wrap">
+      <div class="partner">
+        <div style="display:grid; gap:16px">
+          <h2>Веб-студиям: 30% с каждой оплаты клиента</h2>
+          <p class="lead">Подключайте Пульс клиентам, которым делаете сайты и рекламу. Вы получаете 30% с каждого платежа, пока клиент пользуется сервисом, а клиент — отчёт о том, что принёс ему сайт.</p>
+          <div><a class="btn btn-ghost" href="app/#/login?mode=signup">Стать партнёром</a></div>
+        </div>
+        <div class="partner-stats">
+          <div class="partner-stat"><b>30%</b>с каждой оплаты, пока клиент платит</div>
+          <div class="partner-stat"><b>30 клиентов</b>в одном кабинете на тарифе «Агентство»</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="padding-top: 24px">
+    <div class="wrap">
+      <div class="section-head"><h2>Вопросы</h2></div>
+      <div class="faq">
+        <details>
+          <summary>У меня сайт на Tilda — подойдёт?</summary>
+          <p>Да. Код вставляется в «Настройки сайта → Ещё → HTML-код для вставки в HEAD». Заявки из форм Tilda попадут в CRM автоматически. Так же подключаются WordPress, InSales, 1С-Битрикс и сайты на своём движке.</p>
+        </details>
+        <details>
+          <summary>У нас уже есть amoCRM или Битрикс24. Зачем ещё одна система?</summary>
+          <p>Пульс отвечает на вопрос, который они не решают без интегратора: какая реклама приводит деньги. Можно пользоваться Пульсом для аналитики, блога и соцсетей, а сделки вести там, где привыкли.</p>
+        </details>
+        <details>
+          <summary>Как продажи попадают в Пульс?</summary>
+          <p>Тремя способами: кодом на странице «Спасибо за заказ», запросом от вашего магазина по API при оплате или вручную — для офлайн-продаж и звонков. Каждая продажа привязывается к источнику визита.</p>
+        </details>
+        <details>
+          <summary>Что будет, если я не продлю оплату?</summary>
+          <p>Через 3 дня после окончания оплаты доступ к панели приостановится. Данные не удаляются, статистика с сайта продолжает собираться, публикации на сайте остаются на месте. После оплаты всё снова доступно.</p>
+        </details>
+        <details>
+          <summary>Можно оплатить по счёту от юрлица?</summary>
+          <p>Да. В разделе «Тариф и оплата» укажите реквизиты — счёт сформируется сразу. Доступ продлится после поступления денег.</p>
+        </details>
+        <details>
+          <summary>Можно установить Пульс на свой сервер?</summary>
+          <p>Да, для компаний, которым важно хранить данные у себя, есть коробочная версия. Напишите нам — обсудим условия.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section style="background: var(--surface-2)">
+    <div class="wrap final">
+      <h2>Узнайте, какая реклама приносит деньги</h2>
+      <p class="lead">14 дней бесплатно. Через неделю у вас будет первый отчёт.</p>
+      <div class="hero-cta" style="margin-top:8px">
+        <a class="btn btn-primary" href="app/#/login?mode=signup">Попробовать бесплатно</a>
+        <a class="btn btn-ghost" href="https://dirol982.github.io/crm/app/">Посмотреть демо</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year">2026</span> Пульс CRM</span>
+    <a href="app/">Вход</a>
+    <a href="#pricing">Тарифы</a>
+    <a href="#partners">Партнёрам</a>
+    <!-- Перед запуском добавьте: контакты, оферту, политику обработки персональных данных -->
+  </div>
+</footer>
+
+<script>
+  // Переключатель «помесячно / за год»
+  document.querySelectorAll('.toggle button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var year = b.dataset.period === 'year';
+      document.querySelectorAll('.toggle button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      document.querySelectorAll('.price').forEach(function (p) {
+        var v = Number(year ? p.dataset.year : p.dataset.month).toLocaleString('ru-RU');
+        p.innerHTML = v + ' ₽<small> / месяц' + (year ? ', при оплате за год' : '') + '</small>';
+      });
+    });
+  });
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>

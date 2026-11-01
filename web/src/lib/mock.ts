@@ -78,7 +78,7 @@ for (let day = 89; day >= 0; day--) {
     const [source, medium, campaign] = isLanding ? pick([[['yandex', 'cpc', 'lead_form'], 6], [['vk.com', 'social', 'ads_nov'], 3], [['(direct)', '(none)', null], 1]] as [[string, string, string | null], number][]) : pick(SOURCES);
     const sid = id();
     const v = rand() < 0.25 ? `v-${rnd(1, 600)}` : sid;
-    const bounce = rand() < (medium === 'cpc' ? 0.5 : medium === 'social' ? 0.6 : 0.38);
+    const bounce = rand() < (medium === 'cpc' ? 0.5 : medium === 'social' ? 0.6 : 0.38) * (1.12 - (90 - day) / 600);
     const pages = bounce ? 1 : rnd(2, isLanding ? 4 : 9);
     const pool = isLanding ? LAND_PAGES : PAGES;
     let path = isLanding ? '/promo' : pick([['/', 40], ['/catalog', 20], ['/product/123', 15], ['/blog/how-to-choose', 10], ['/delivery', 5], ['/catalog/shoes', 10]] as [string, number][]);
@@ -92,7 +92,8 @@ for (let day = 89; day >= 0; day--) {
     let ev = 0;
     if (!bounce && rand() < (isLanding ? 0.16 : 0.05)) { ev++; events.push({ sid, site: site.id, name: 'lead', ts, value: null }); }
     if (!isLanding && !bounce && rand() < 0.15) { ev++; events.push({ sid, site: site.id, name: 'add_to_cart', ts, value: null }); }
-    if (!isLanding && !bounce && rand() < (medium === 'cpc' ? 0.05 : 0.035)) {
+    // конверсия растёт со временем — компания «настраивает рекламу» с помощью Пульса
+    if (!isLanding && !bounce && rand() < (medium === 'cpc' ? 0.05 : 0.035) * (0.55 + (90 - day) / 100)) {
       ev++;
       const amount = rnd(9, 160) * 100;
       const c = contacts[rnd(0, contacts.length - 1)];

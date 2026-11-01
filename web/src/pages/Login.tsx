@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useStore } from '../lib/store';
 
@@ -13,7 +13,8 @@ const ERRORS: Record<string, string> = {
 export default function Login() {
   const { login } = useStore();
   const nav = useNavigate();
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [sp] = useSearchParams();
+  const [mode, setMode] = useState<'login' | 'signup'>(sp.get('mode') === 'signup' ? 'signup' : 'login');
   const [f, setF] = useState({ company: '', name: '', email: '', password: '' });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);

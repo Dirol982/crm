@@ -50,17 +50,19 @@ export async function buildApp() {
   await app.register(channelRoutes);
   await app.register(billingRoutes);
 
-  // Раздача собранной панели (web/dist), если она есть
-  if (existsSync(config.webDist)) {
-    await app.register(fastifyStatic, { root: config.webDist });
-    // SPA: любые GET-адреса панели отдают index.html, но не API и не отсутствующие файлы (.js/.css…)
-    app.setNotFoundHandler((req, reply) => {
-      const path = req.url.split('?')[0];
-      return req.method === 'GET' && !path.startsWith('/api/') && !/\.[a-z0-9]+$/i.test(path)
-        ? reply.sendFile('index.html')
-        : reply.code(404).send({ error: 'not_found' });
-    });
+  // Лендинг на «/», панель на «/app/» (HashRouter — все маршруты панели внутри index.html)
+  const hasApp = existsSync(config.webDist);
+  if (hasApp) await app.register(fastifyStatic, { root: config.webDist, prefix: '/app/' });
+  if (existsSync(config.landingDir)) {
+    await app.register(fastifyStatic, { root: config.landingDir, prefix: '/', decorateReply: !hasApp });
   }
+  app.get('/app', async (_req, reply) => reply.redirect('/app/'));
+  app.setNotFoundHandler((req, reply) => {
+    const path = req.url.split('?')[0];
+    if (hasApp && req.method === 'GET' && path.startsWith('/app/') && !/\.[a-z0-9]+$/i.test(path)) return reply.sendFile('index.html', config.webDist);
+    if (req.method === 'GET' && !path.startsWith('/api/') && !/\.[a-z0-9]+$/i.test(path)) return reply.redirect('/');
+    return reply.code(404).send({ error: 'not_found' });
+  });
   return app;
 }
 

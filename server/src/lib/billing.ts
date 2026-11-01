@@ -128,7 +128,7 @@ export async function createCheckout(tenantId: string, userId: string, plan: Pla
       amount: { value: amount.toFixed(2), currency: 'RUB' },
       capture: true,
       save_payment_method: true, // для автопродления
-      confirmation: { type: 'redirect', return_url: `${config.publicUrl}/#/billing?payment=${p!.id}` },
+      confirmation: { type: 'redirect', return_url: `${config.publicUrl}/app/#/billing?payment=${p!.id}` },
       description: describe(plan, period),
       metadata: { tenant_id: tenantId, payment_id: p!.id },
       receipt: receipt(t?.billing_email || t?.user_email, describe(plan, period), amount),
