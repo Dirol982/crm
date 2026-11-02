@@ -6,6 +6,9 @@ import {
   applyPayment, billingConfig, billingEnabled, createCheckout, invalidateState, invoicesEnabled, PaymentError, syncPayment, tenantState, usage,
 } from '../lib/billing.js';
 import { isPlan, PLANS, priceFor, YEAR_DISCOUNT, type PlanId } from '../lib/plans.js';
+import { queueEmail } from '../lib/mailer.js';
+import { invoiceEmail } from '../lib/emails.js';
+import { billingContact } from '../lib/notify.js';
 
 const planBody = z.object({
   plan: z.string().refine(isPlan, 'unknown_plan') as unknown as z.ZodType<PlanId>,
@@ -79,11 +82,14 @@ export default async function billingRoutes(app: FastifyInstance) {
         address: z.string().trim().max(500).optional(),
       }),
     }).parse(req.body);
-    return one(
+    const inv = await one(
       `INSERT INTO payments(tenant_id, provider, plan, period, amount, company, created_by)
        VALUES ($1,'invoice',$2,$3,$4,$5,$6) RETURNING id, plan, period, amount, status, created_at, company`,
       [req.user.tid, b.plan, b.period, priceFor(b.plan, b.period), JSON.stringify(b.company), req.user.uid],
     );
+    const c = await billingContact(req.user.tid);
+    if (c?.email) await queueEmail({ to: c.email, kind: 'invoice', tenantId: req.user.tid, ...invoiceEmail({ company: c.company, buyer: b.company.name, amount: inv.amount, plan: PLANS[b.plan].name }) });
+    return inv;
   });
 
   app.get('/api/billing/invoice/:id', { preHandler: requireAuth }, async (req, reply) => {

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useStore, presetRange, type Preset } from '../lib/store';
-import { DEMO } from '../lib/api';
+import { api, DEMO } from '../lib/api';
 import { ROLE_LABELS } from '../lib/labels';
 import { Icon } from './Icon';
 
@@ -14,7 +14,12 @@ const NAV: [string, string, string][][] = [
 const SECTIONS = ['Аналитика', 'CRM', 'Сайт', 'Компания', 'Владелец'];
 
 export function Layout() {
-  const { me, logout } = useStore();
+  const { me, logout, login } = useStore();
+  const switchTo = async (tenantId: string) => {
+    const r = await api('/api/auth/switch', { method: 'POST', body: { tenantId } });
+    await login(r.token);
+    location.hash = '#/';
+  };
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   return (
@@ -38,7 +43,11 @@ export function Layout() {
         ))}
         <div className="sidebar-foot">
           <div>
-            <div style={{ fontWeight: 600, color: 'var(--text)' }}>{me?.tenant.name}</div>
+            {(me?.workspaces.length ?? 0) > 1 ? (
+              <select value={me!.tenant.id} onClick={(e) => e.stopPropagation()} onChange={(e) => switchTo(e.target.value)} aria-label="Компания" style={{ width: '100%', fontWeight: 600, marginBottom: 4 }}>
+                {me!.workspaces.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+              </select>
+            ) : <div style={{ fontWeight: 600, color: 'var(--text)' }}>{me?.tenant.name}</div>}
             <div>{me?.user.name} · {ROLE_LABELS[me?.role ?? 'viewer']}</div>
           </div>
           {!DEMO && <button className="btn sm" onClick={logout}><Icon name="logout" size={14} /> Выйти</button>}

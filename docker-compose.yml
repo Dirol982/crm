@@ -38,6 +38,9 @@ services:
       SELLER_ACCOUNT: ${SELLER_ACCOUNT:-}
       SELLER_CORR_ACCOUNT: ${SELLER_CORR_ACCOUNT:-}
       SUPERADMIN_EMAILS: ${SUPERADMIN_EMAILS:-}
+      SMTP_URL: ${SMTP_URL:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO:-}
     volumes:
       - uploads:/app/uploads
     ports:

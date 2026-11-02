@@ -16,6 +16,9 @@ import analyticsRoutes from './routes/analytics.js';
 import contentRoutes, { publishDue } from './routes/content.js';
 import channelRoutes, { processDeliveries } from './routes/channels.js';
 import billingRoutes from './routes/billing.js';
+import accountRoutes from './routes/account.js';
+import { processOutbox, mailEnabled } from './lib/mailer.js';
+import { runNotifications } from './lib/notify.js';
 import { autoRenew, billingEnabled, syncPending } from './lib/billing.js';
 
 export async function buildApp() {
@@ -49,6 +52,7 @@ export async function buildApp() {
   await app.register(contentRoutes);
   await app.register(channelRoutes);
   await app.register(billingRoutes);
+  await app.register(accountRoutes);
 
   // Лендинг на «/», панель на «/app/» (HashRouter — все маршруты панели внутри index.html)
   const hasApp = existsSync(config.webDist);
@@ -78,6 +82,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     .catch((e) => app.log.error(e));
   tick();
   setInterval(tick, 30_000).unref();
+  // Письма: очередь — каждые 30 секунд, напоминания и отчёты — раз в 5 минут
+  const mailTick = () => processOutbox(app.log).catch((e) => app.log.error(e));
+  mailTick();
+  setInterval(mailTick, 30_000).unref();
+  const notifyTick = () => runNotifications(app.log);
+  setTimeout(notifyTick, 10_000).unref();
+  setInterval(notifyTick, 5 * 60_000).unref();
+  app.log.info(mailEnabled() ? 'mail: SMTP enabled' : 'mail: SMTP_URL not set, emails are logged only');
   // Оплата: автопродление и сверка платежей — раз в 5 минут
   if (billingEnabled()) {
     const billingTick = () => syncPending(app.log).then(() => autoRenew(app.log)).catch((e) => app.log.error(e));

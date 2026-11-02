@@ -27,7 +27,8 @@ interface EV { sid: string; site: string; name: string; ts: number; value: numbe
 
 const DAY = 86400000;
 const now = Date.now();
-const USER = { id: id(), email: 'demo@example.com', name: 'Демо Владелец' };
+const USER: any = { id: id(), email: 'demo@example.com', name: 'Демо Владелец', email_digest: true };
+const invitations: any[] = [];
 const MANAGER = { id: id(), email: 'manager@example.com', name: 'Мария Менеджер' };
 const tenant = { id: id(), name: 'Демо магазин', plan: 'pro', currency: 'RUB', timezone: 'Europe/Moscow', deal_stages: ['new', 'contacted', 'proposal', 'negotiation', 'won', 'lost'] };
 const team = [
@@ -335,7 +336,17 @@ const handlers: [string, RegExp, (m: RegExpMatchArray, p: URLSearchParams, body:
   ['POST', /^\/api\/sites\/([^/]+)\/rotate-secret$/, (m) => { const s = sites.find((x) => x.id === m[1])!; s.secret_key = 'sk_demo_' + rnd(1e8, 9e8) + 'z'.repeat(31); return s; }],
   ['DELETE', /^\/api\/sites\/([^/]+)$/, (m) => { sites.splice(sites.findIndex((x) => x.id === m[1]), 1); return { ok: true }; }],
   ['GET', /^\/api\/team$/, () => team],
-  ['POST', /^\/api\/team$/, (_m, _p, b) => { const u = { id: id(), email: b.email, name: b.name, role: b.role, created_at: new Date().toISOString() }; team.push(u); return u; }],
+  ['POST', /^\/api\/team$/, (_m, _p, b) => {
+    if (team.some((u) => u.email === b.email)) throw new Error('already_member');
+    invitations.unshift({ id: id(), email: b.email, name: b.name || null, role: b.role, created_at: new Date().toISOString(), expired: false });
+    return { status: 'invited' };
+  }],
+  ['GET', /^\/api\/team\/invitations$/, () => invitations],
+  ['POST', /^\/api\/team\/invitations\/([^/]+)\/resend$/, () => ({ ok: true })],
+  ['DELETE', /^\/api\/team\/invitations\/([^/]+)$/, (m) => { invitations.splice(invitations.findIndex((i) => i.id === m[1]), 1); return { ok: true }; }],
+  ['POST', /^\/api\/auth\/forgot$/, () => ({ ok: true })],
+  ['POST', /^\/api\/auth\/password$/, (_m, _p, b) => { if (b.current !== 'demo12345') throw new Error('wrong_password'); return { token: 'demo' }; }],
+  ['PATCH', /^\/api\/me$/, (_m, _p, b) => Object.assign(USER, b)],
   ['DELETE', /^\/api\/team\/([^/]+)$/, (m) => { team.splice(team.findIndex((x) => x.id === m[1]), 1); return { ok: true }; }],
 
   ['GET', /^\/api\/analytics\/overview$/, (_m, p) => {

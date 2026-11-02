@@ -3,7 +3,7 @@ import { api, getToken, setToken, DEMO } from './api';
 import { isoDay, setCurrency } from './format';
 
 export interface Me {
-  user: { id: string; email: string; name: string };
+  user: { id: string; email: string; name: string; email_digest?: boolean };
   tenant: { id: string; name: string; plan: string; currency: string; timezone: string; deal_stages: string[] };
   role: 'owner' | 'admin' | 'manager' | 'viewer';
   workspaces: { id: string; name: string; role: string }[];
@@ -78,7 +78,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setSite: (s) => { setSiteState(s); write('crm_site', s); },
     setRange: (r) => { setRangeState(r); write('crm_range', r.preset); },
     refresh,
-    login: async (token) => { setToken(token); setLoading(true); await refresh(); },
+    // при обновлении сессии уже вошедшего пользователя экран не перерисовываем целиком
+    login: async (token) => { setToken(token); if (!me) setLoading(true); await refresh(); },
     logout: () => { setToken(null); setMe(null); location.hash = '#/login'; },
     can: (min) => !!me && RANK[me.role] >= RANK[min],
   }), [me, loading, sites, site, range, refresh]);
