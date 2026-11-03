@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/Layout';
 import { Card, Empty, Kpi, Loading, Modal } from '../components/ui';
 import { Icon } from '../components/Icon';
@@ -69,7 +70,7 @@ export default function Ads() {
       <PageHeader title="Реклама" filters={false}>
         <a className="btn" href="../help/#part-ads" target="_blank" rel="noreferrer">Инструкция</a>
         {manager && data.campaigns.length > 0 && (
-          <button className="btn primary" disabled={running || !!busy || !data.ai_enabled} onClick={run} title={data.ai_enabled ? 'Агент проанализирует все кампании прямо сейчас' : 'ИИ не подключён на сервере'}>
+          <button className="btn primary" disabled={running || !!busy || !data.ai_enabled || !data.ai_plan} onClick={run} title={!data.ai_plan ? 'ИИ-агент не входит в ваш тариф' : data.ai_enabled ? 'Агент проанализирует все кампании прямо сейчас' : 'ИИ не подключён на сервере'}>
             <Icon name="spark" size={15} /> {running ? 'Агент анализирует…' : 'Запустить анализ'}
           </button>
         )}
@@ -81,6 +82,13 @@ export default function Ads() {
         <div className="callout warn">
           <b>ИИ ещё не подключён на сервере.</b> Статистика, ручные изменения и проверка результата работают, а для анализа агентом администратор сервера должен указать ключ Claude API
           (переменная <code>ANTHROPIC_API_KEY</code>).
+        </div>
+      )}
+      {data.ai_enabled && !data.ai_plan && (
+        <div className="callout warn">
+          <b>ИИ-агент входит в тарифы «Бизнес», «Про» и «Агентство».</b> На тарифе «Старт» его можно подключить опцией за 1 500 ₽ в месяц.
+          Статистика кампаний, ручные изменения и проверка результата работают и без агента.{' '}
+          {admin && <Link to="/billing">Сменить тариф или подключить агента →</Link>}
         </div>
       )}
       {msg && <div className={`callout ${msg.ok ? 'good' : 'bad'}`}>{msg.text}</div>}
@@ -190,6 +198,7 @@ export default function Ads() {
 
 const ERRORS: Record<string, string> = {
   ai_disabled: 'ИИ не подключён на сервере',
+  plan_ai: 'ИИ-агент не входит в ваш тариф — подключите его на странице «Тариф и оплата»',
   already_running: 'Агент уже работает — дождитесь окончания',
   no_campaigns: 'Сначала подключите кабинет с кампаниями',
 };
@@ -252,7 +261,7 @@ function DemoTour({ data, running, busy, onRun, onSimulate, admin, manager }: { 
           <li key={title} className={done ? 'done' : i === cur ? 'cur' : ''}>
             <div className="tour-dot">{done ? '✓' : i + 1}</div>
             <div><b>{title}</b><p className="sub">{text}</p>
-              {i === 1 && i === cur && manager && <button className="btn primary sm" disabled={running || !!busy || !data.ai_enabled} onClick={onRun}>{running ? 'Агент анализирует…' : 'Запустить анализ'}</button>}
+              {i === 1 && i === cur && manager && <button className="btn primary sm" disabled={running || !!busy || !data.ai_enabled || !data.ai_plan} onClick={onRun}>{running ? 'Агент анализирует…' : 'Запустить анализ'}</button>}
               {i === 3 && (i === cur || checked) && admin && ran && <button className="btn primary sm" disabled={running || !!busy} onClick={onSimulate}>{busy === 'sim' ? 'Перематываем…' : 'Перемотать на 3 дня вперёд'}</button>}
             </div>
           </li>

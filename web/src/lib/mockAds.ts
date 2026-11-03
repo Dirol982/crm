@@ -8,6 +8,9 @@ let idc = 900000;
 const id = () => `00000000-0000-4000-9000-${String(++idc).padStart(12, '0')}`;
 const DAY = 864e5;
 let shift = 0; // «перемотанные» дни
+let aiPlan: () => boolean = () => true;
+/** Входит ли агент в тариф демо-аккаунта — задаёт демо-бэкенд оплаты */
+export const setAiPlan = (f: () => boolean) => { aiPlan = f; };
 const now = () => Date.now() + shift * DAY;
 const iso = (t: number) => new Date(t).toISOString();
 
@@ -74,7 +77,7 @@ function overview() {
   });
   const running = runs.some((r) => r.status === 'running');
   return {
-    ai_enabled: true, model: 'claude', accounts, campaigns: list, policy, running,
+    ai_enabled: true, ai_plan: aiPlan(), model: 'claude', accounts, campaigns: list, policy, running,
     runs: [...runs].reverse(),
     actions: [...actions].reverse().map((a) => { const c = campaigns.find((x) => x.id === a.campaign_id); return { ...a, campaign: c?.name ?? null, platform: c?.platform ?? null }; }),
   };
@@ -152,7 +155,7 @@ export const adsHandlers: H[] = [
     monitor();
     return { ok: true };
   }],
-  ['POST', /^\/api\/ads\/run$/, () => { if (runs.some((r) => r.status === 'running')) throw new Error('already_running'); agentRun(); return { started: true }; }],
+  ['POST', /^\/api\/ads\/run$/, () => { if (!aiPlan()) throw new Error('plan_ai'); if (runs.some((r) => r.status === 'running')) throw new Error('already_running'); agentRun(); return { started: true }; }],
   ['PUT', /^\/api\/ads\/policy$/, (_m, _p, b) => (policy = { ...policy, ...b })],
   ['PATCH', /^\/api\/ads\/campaigns\/([^/]+)$/, (m, _p, b) => { Object.assign(campaigns.find((c) => c.id === m[1]), b); return { ok: true }; }],
   ['POST', /^\/api\/ads\/actions\/([^/]+)\/approve$/, (m) => { apply(actions.find((a) => a.id === m[1]), 'user'); return { ok: true }; }],

@@ -26,10 +26,14 @@ export function scheduleAds(log: Log) {
         `SELECT DISTINCT c.tenant_id FROM ad_campaigns c
          JOIN ad_policies p ON p.tenant_id=c.tenant_id AND p.mode <> 'off'
          WHERE NOT EXISTS (SELECT 1 FROM agent_runs r WHERE r.tenant_id=c.tenant_id AND r.kind='optimize' AND r.started_at > now() - interval '24 hours')
-         LIMIT 5`,
+         LIMIT 100`,
       );
+      let started = 0;
       for (const t of due) {
-        if ((await tenantState(t.tenant_id)).status === 'frozen') continue;
+        if (started >= 5) break; // не больше 5 анализов за проход — остальные в следующие 15 минут
+        // приостановленные компании и тарифы без ИИ-агента пропускаем
+        if (!(await tenantState(t.tenant_id)).ai) continue;
+        started++;
         await runOptimizer(t.tenant_id, 'schedule').catch((e) => log.error(e));
       }
     } finally {

@@ -7,7 +7,7 @@ export interface Me {
   tenant: { id: string; name: string; plan: string; currency: string; timezone: string; deal_stages: string[] };
   role: 'owner' | 'admin' | 'manager' | 'viewer';
   workspaces: { id: string; name: string; role: string }[];
-  billing?: { status: 'unlimited' | 'trial' | 'active' | 'grace' | 'frozen'; plan: string | null; days_left: number | null; trial_ends_at: string | null; paid_until: string | null };
+  billing?: { status: 'unlimited' | 'trial' | 'active' | 'grace' | 'frozen'; plan: string | null; days_left: number | null; trial_ends_at: string | null; paid_until: string | null; ai?: boolean; ai_addon?: boolean };
   is_superadmin?: boolean;
 }
 export interface Site { id: string; name: string; domain: string | null; post_url_template?: string | null; public_key: string; secret_key?: string; snippet: string; api_url: string }

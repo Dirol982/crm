@@ -42,6 +42,7 @@ export default function Billing() {
   const [err, setErr] = useState('');
   const [returned, setReturned] = useState<'' | 'checking' | 'succeeded' | 'canceled' | 'pending'>('');
   const [invoiceFor, setInvoiceFor] = useState<string | null>(null);
+  const [addon, setAddon] = useState<boolean | null>(null); // опция «ИИ-агент» для тарифов, куда он не входит
   const admin = can('admin');
 
   // Возврат со страницы оплаты ЮKassa: ?payment=<id> — сверяем статус, пока не станет известен
@@ -75,10 +76,15 @@ export default function Billing() {
   const st = data.state, s = STATUS[st.status];
   const currentPlan = data.plans.find((p: any) => p.id === st.plan);
 
+  const addonOn = addon ?? !!data.settings.ai_addon;
+  const withAddon = (p: any) => !p.ai && addonOn;
+  const priceOf = (p: any) => (period === 'year' ? p.price_year : p.price_month) + (withAddon(p) ? Math.round(data.ai_addon_price * (period === 'year' ? 12 * (1 - data.year_discount) : 1)) : 0);
+
   const checkout = async (plan: string) => {
     setErr(''); setBusy(plan);
     try {
-      const r = await api('/api/billing/checkout', { method: 'POST', body: { plan, period } });
+      const p = data.plans.find((x: any) => x.id === plan);
+      const r = await api('/api/billing/checkout', { method: 'POST', body: { plan, period, ai_addon: withAddon(p) } });
       location.href = r.confirmation_url; // страница оплаты ЮKassa: карта, СБП, SberPay
     } catch (e: any) {
       setErr(e.message === 'payment_provider' ? 'Платёжная система сейчас недоступна, попробуйте через несколько минут' : 'Не удалось создать платёж');
@@ -105,7 +111,7 @@ export default function Billing() {
         <Card title="Текущий тариф">
           <div className="stack" style={{ gap: 12 }}>
             <div className="row">
-              <span style={{ fontSize: 22, fontWeight: 650 }}>{st.status === 'trial' ? 'Пробный период' : currentPlan?.name ?? '—'}</span>
+              <span style={{ fontSize: 22, fontWeight: 650 }}>{st.status === 'trial' ? 'Пробный период' : currentPlan?.name ?? '—'}{st.status !== 'trial' && st.ai_addon ? ' + ИИ-агент' : ''}</span>
               <span className="badge"><span className="dot" style={{ background: s.color }} />{s.label}</span>
             </div>
             <div className="sub">
@@ -146,19 +152,26 @@ export default function Billing() {
         <div className="grid g-4">
           {data.plans.map((p: any) => {
             const current = st.status !== 'trial' && st.plan === p.id;
-            const price = period === 'year' ? p.price_year : p.price_month;
+            const price = priceOf(p);
             return (
               <div key={p.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8, borderColor: current ? 'var(--accent)' : undefined, borderWidth: current ? 2 : 1 }}>
                 <div className="row"><b style={{ fontSize: 16 }}>{p.name}</b>{current && <span className="badge">ваш тариф</span>}</div>
                 <div><span style={{ fontSize: 24, fontWeight: 650 }}>{rub(price)}</span><span className="sub"> / {period === 'year' ? 'год' : 'месяц'}</span></div>
-                {period === 'year' && <div className="sub">{rub(Math.round(price / 12))} в месяц вместо {rub(p.price_month)}</div>}
+                {period === 'year' && <div className="sub">{rub(Math.round(price / 12))} в месяц вместо {rub(p.price_month + (withAddon(p) ? data.ai_addon_price : 0))}</div>}
                 <div className="sub">{p.note}</div>
                 <ul style={{ margin: '4px 0', paddingLeft: 18, fontSize: 13, lineHeight: 1.7 }}>
                   <li>{num(p.visits)} визитов в месяц</li>
                   <li>{p.sites} {p.sites === 1 ? 'сайт' : p.sites < 5 ? 'сайта' : 'сайтов'}</li>
                   <li>{p.users >= 1000 ? 'Сотрудники без лимита' : `${p.users} сотрудников`}</li>
                   <li>Аналитика, CRM, публикации, соцсети</li>
+                  {p.ai ? <li><b>ИИ-агент для рекламы</b></li> : <li className="muted">ИИ-агент — опцией</li>}
                 </ul>
+                {!p.ai && admin && (
+                  <label className="row" style={{ fontSize: 13, alignItems: 'flex-start', gap: 6, flexWrap: 'nowrap', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={addonOn} onChange={(e) => setAddon(e.target.checked)} style={{ marginTop: 3 }} />
+                    <span>Добавить ИИ-агента для рекламы — +{rub(data.ai_addon_price)} в месяц</span>
+                  </label>
+                )}
                 <span className="spacer" />
                 {admin ? (
                   <>
@@ -182,7 +195,7 @@ export default function Billing() {
             <tbody>{data.payments.map((p: any) => (
               <tr key={p.id}>
                 <td>{date(p.paid_at ?? p.created_at, true)}</td>
-                <td>{data.plans.find((x: any) => x.id === p.plan)?.name ?? p.plan}, {p.period === 'year' ? 'год' : 'месяц'}{p.is_renewal && <span className="sub"> · автопродление</span>}</td>
+                <td>{data.plans.find((x: any) => x.id === p.plan)?.name ?? p.plan}{p.ai_addon ? ' + ИИ-агент' : ''}, {p.period === 'year' ? 'год' : 'месяц'}{p.is_renewal && <span className="sub"> · автопродление</span>}</td>
                 <td>{p.provider === 'invoice' ? `Счёт · ${p.company?.name ?? ''}` : 'Карта / СБП'}</td>
                 <td title={p.error ?? ''}>{PAY_STATUS[p.status]}{p.status === 'canceled' && p.error && <div className="sub">{p.error}</div>}</td>
                 <td className="num"><b>{rub(p.amount)}</b></td>
@@ -192,7 +205,7 @@ export default function Billing() {
           </table></div>
         )}
       </Card>
-      {invoiceFor && <InvoiceForm plan={invoiceFor} period={period} onClose={() => setInvoiceFor(null)} onDone={(id) => { setInvoiceFor(null); reload(); printInvoice(id); }} />}
+      {invoiceFor && <InvoiceForm plan={invoiceFor} period={period} aiAddon={withAddon(data.plans.find((x: any) => x.id === invoiceFor))} onClose={() => setInvoiceFor(null)} onDone={(id) => { setInvoiceFor(null); reload(); printInvoice(id); }} />}
     </div>
   );
 }
@@ -207,13 +220,13 @@ function BillingEmail({ value, onSave }: { value: string | null; onSave: (v: str
   );
 }
 
-function InvoiceForm({ plan, period, onClose, onDone }: { plan: string; period: 'month' | 'year'; onClose: () => void; onDone: (id: string) => void }) {
+function InvoiceForm({ plan, period, aiAddon, onClose, onDone }: { plan: string; period: 'month' | 'year'; aiAddon: boolean; onClose: () => void; onDone: (id: string) => void }) {
   const [f, setF] = useState({ name: '', inn: '', kpp: '', address: '' });
   const [err, setErr] = useState('');
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const r = await api('/api/billing/invoice', { method: 'POST', body: { plan, period, company: f } });
+      const r = await api('/api/billing/invoice', { method: 'POST', body: { plan, period, ai_addon: aiAddon, company: f } });
       onDone(r.id);
     } catch { setErr('Проверьте реквизиты: ИНН — 10 или 12 цифр, КПП — 9 цифр'); }
   };
