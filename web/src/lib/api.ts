@@ -10,7 +10,7 @@ export const setToken = (t: string | null) => {
 };
 
 export class ApiError extends Error {
-  constructor(public status: number, public code: string) { super(code); }
+  constructor(public status: number, public code: string, public data: any = null) { super(code); }
 }
 
 export async function api<T = any>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
@@ -34,7 +34,7 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
   // Аккаунт не оплачен — отправляем на страницу оплаты
   if (res.status === 402 && !location.hash.startsWith('#/billing')) location.hash = '#/billing';
   const data = res.status === 204 ? null : await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(res.status, data?.error ?? 'error');
+  if (!res.ok) throw new ApiError(res.status, data?.error ?? 'error', data);
   return data as T;
 }
 
@@ -50,6 +50,6 @@ export async function uploadImage(file: File): Promise<string> {
   fd.append('file', file);
   const res = await fetch(BASE + '/api/uploads', { method: 'POST', body: fd, headers: getToken() ? { authorization: `Bearer ${getToken()}` } : {} });
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(res.status, data?.error ?? 'error');
+  if (!res.ok) throw new ApiError(res.status, data?.error ?? 'error', data);
   return data.url;
 }

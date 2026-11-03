@@ -27,6 +27,7 @@ export default function Integrations() {
   return (
     <div className="stack">
       <PageHeader title="Подключение сайта" filters={false}>
+        <a className="btn" href="../help/" target="_blank" rel="noreferrer">Инструкция со скриншотами</a>
         {sites.length > 1 && <select value={sel} onChange={(e) => setSel(+e.target.value)}>{sites.map((x, i) => <option key={x.id} value={i}>{x.name}</option>)}</select>}
         {can('admin') && <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" size={15} /> Добавить сайт</button>}
       </PageHeader>

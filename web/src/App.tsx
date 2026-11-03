@@ -2,6 +2,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Loading } from './components/ui';
 import { StoreProvider, useStore } from './lib/store';
+import Ads from './pages/Ads';
 import Behavior from './pages/Behavior';
 import Billing from './pages/Billing';
 import { AcceptInvite, ResetPassword } from './pages/AuthPages';
@@ -52,6 +53,7 @@ function Routed() {
         <Route path="traffic" element={<Traffic />} />
         <Route path="behavior" element={<Behavior />} />
         <Route path="sales" element={<Sales />} />
+        <Route path="ads" element={<Ads />} />
         <Route path="contacts" element={<Contacts />} />
         <Route path="contacts/:id" element={<ContactPage />} />
         <Route path="deals" element={<Deals />} />

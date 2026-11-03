@@ -202,3 +202,31 @@ ${d.exitPage ? `<p style="margin:0 0 14px;font-size:14px;color:#222">Чаще в
 
 export const ROLE_NAMES: Record<string, string> = { owner: 'владелец', admin: 'администратор', manager: 'менеджер', viewer: 'наблюдатель' };
 export { app as appLink };
+
+export function adsReportEmail(p: { summary: string; applied: number; pending: number; failed: number }) {
+  const parts = [
+    p.applied ? `применено автоматически: ${p.applied}` : '',
+    p.pending ? `ждут вашего решения: ${p.pending}` : '',
+    p.failed ? `не удалось применить: ${p.failed}` : '',
+  ].filter(Boolean);
+  return {
+    subject: p.pending ? `ИИ-агент по рекламе: ${p.pending} изменений ждут вашего решения` : 'ИИ-агент по рекламе: отчёт',
+    ...render({
+      title: 'Агент проверил вашу рекламу',
+      intro: [esc(p.summary).replace(/\n/g, '<br>'), parts.length ? `Изменения: ${parts.join(', ')}.` : 'Изменений не потребовалось.'],
+      button: { text: p.pending ? 'Посмотреть и решить' : 'Открыть отчёт', url: app('/ads') },
+      after: ['Каждое изменение перед применением проверил контролёр, а через 2 дня он проверит результат и при ухудшении вернёт всё как было.'],
+    }),
+  };
+}
+
+export function adsRollbackEmail(p: { campaign: string; explanation: string }) {
+  return {
+    subject: `Контролёр отменил изменение в кампании «${p.campaign}»`,
+    ...render({
+      title: 'Изменение отменено автоматически',
+      intro: [`Кампания «${esc(p.campaign)}».`, esc(p.explanation)],
+      button: { text: 'Подробнее', url: app('/ads') },
+    }),
+  };
+}

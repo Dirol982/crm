@@ -6,7 +6,7 @@ import { ROLE_LABELS } from '../lib/labels';
 import { Icon } from './Icon';
 
 const NAV: [string, string, string][][] = [
-  [['/', 'Сводка', 'dashboard'], ['/traffic', 'Источники', 'traffic'], ['/behavior', 'Поведение', 'behavior'], ['/sales', 'Продажи', 'sales']],
+  [['/', 'Сводка', 'dashboard'], ['/traffic', 'Источники', 'traffic'], ['/behavior', 'Поведение', 'behavior'], ['/sales', 'Продажи', 'sales'], ['/ads', 'Реклама', 'ads']],
   [['/contacts', 'Клиенты', 'contacts'], ['/deals', 'Сделки', 'deals'], ['/tasks', 'Задачи', 'tasks']],
   [['/content', 'Публикации', 'content'], ['/calendar', 'Календарь', 'calendar'], ['/blocks', 'Блоки сайта', 'blocks'], ['/channels', 'Соцсети', 'share']],
   [['/integrations', 'Подключение', 'integrations'], ['/billing', 'Тариф и оплата', 'card'], ['/settings', 'Настройки', 'settings']],
