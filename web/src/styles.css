@@ -306,3 +306,16 @@ label.switch { display: inline-flex; gap: 6px; align-items: center; font-size: 1
 .linklike { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); cursor: pointer; }
 @media (max-width: 1100px) { .how { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tour-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 720px) { .how, .tour-steps { grid-template-columns: minmax(0, 1fr); } }
+
+/* Переключатель кабинетов: владелец платформы / компания */
+.cabinet-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 28px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
+.cabinet-label { font-size: 12.5px; color: var(--text-2); font-weight: 600; }
+.cabinet-bar .seg button { display: inline-flex; align-items: center; gap: 6px; }
+.cabinet-note { font-size: 12px; color: var(--muted); flex: 1; min-width: 220px; }
+@media (max-width: 1000px) { .cabinet-note { display: none; } }
+@media (max-width: 760px) {
+  .cabinet-bar { padding: 8px 16px; top: 53px; }
+  .cabinet-label, .cab-name { display: none; }
+  .cabinet-bar .seg { width: 100%; }
+  .cabinet-bar .seg button { flex: 1; justify-content: center; font-size: 12.5px; padding: 6px 6px; }
+}

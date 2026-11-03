@@ -29,7 +29,8 @@ export default function Platform() {
   };
   return (
     <div className="stack">
-      <PageHeader title="Платформа" filters={false} />
+      <PageHeader title="Компании и выручка" filters={false} />
+      <p className="sub" style={{ margin: 0 }}>Ваш кабинет как владельца сервиса: кто зарегистрировался, кто платит и сколько. Данные бизнеса клиентов — заказы, выручка, покупатели — здесь не показываются.</p>
       <div className="grid g-4 kpis">
         <Kpi label="Ежемесячная выручка" value={rub(data.totals.mrr)} />
         <Kpi label="Платящие компании" value={num(data.totals.paying)} />
@@ -56,7 +57,7 @@ export default function Platform() {
             return (
               <tr key={t.id}>
                 <td><b>{t.name}</b></td><td className="trunc">{t.owner_email}</td>
-                <td>{PLAN[t.plan] ?? t.plan}{t.billing_period === 'year' ? ' · год' : ''}{t.has_card && <span className="sub"> · карта</span>}</td>
+                <td>{PLAN[t.plan] ?? t.plan}{t.ai_addon ? ' + ИИ' : ''}{t.billing_period === 'year' ? ' · год' : ''}{t.has_card && <span className="sub"> · карта</span>}</td>
                 <td><span className="badge"><span className="dot" style={{ background: s.color }} />{s.label}</span></td>
                 <td className="num">{t.sites}</td><td className="num">{rub(t.paid_total)}</td><td>{date(t.created_at)}</td>
                 <td className="num"><button className="btn sm" onClick={() => extend(t.id)}>Продлить</button></td>
