@@ -1,3 +1,4 @@
+import { adsHandlers } from './mockAds';
 /**
  * Демо-бэкенд в браузере (для GitHub Pages): генерирует правдоподобные данные
  * и реализует те же эндпоинты, что и сервер. Изменения живут до перезагрузки.
@@ -289,6 +290,7 @@ function group<T>(arr: T[], key: (t: T) => string) {
 }
 
 const handlers: [string, RegExp, (m: RegExpMatchArray, p: URLSearchParams, body: any) => any][] = [
+  ...adsHandlers,
   ['POST', /^\/api\/auth\/(login|signup|switch)$/, () => ({ token: 'demo' })],
   ['GET', /^\/api\/me$/, () => ({ user: USER, tenant, role: 'owner', workspaces: [{ id: tenant.id, name: tenant.name, role: 'owner' }], billing: billingState(), is_superadmin: false })],
   ['GET', /^\/api\/billing$/, () => ({
