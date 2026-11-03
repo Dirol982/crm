@@ -67,6 +67,7 @@ export default function Ads() {
   return (
     <div className="stack">
       <PageHeader title="Реклама" filters={false}>
+        <a className="btn" href="../help/#part-ads" target="_blank" rel="noreferrer">Инструкция</a>
         {manager && data.campaigns.length > 0 && (
           <button className="btn primary" disabled={running || !!busy || !data.ai_enabled} onClick={run} title={data.ai_enabled ? 'Агент проанализирует все кампании прямо сейчас' : 'ИИ не подключён на сервере'}>
             <Icon name="spark" size={15} /> {running ? 'Агент анализирует…' : 'Запустить анализ'}

@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Инструкция — Пульс CRM</title>
+<meta name="description" content="Пошаговая инструкция со скриншотами: как подключить сайт к Пульс CRM, передавать заявки и продажи, подключить рекламные кабинеты и настроить ИИ-агента.">
+<style>
+@font-face { font-family: 'Manrope'; font-style: normal; font-display: swap; font-weight: 200 800; src: url(../fonts/manrope-cyrillic-wght-normal.woff2) format('woff2'); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: 'Manrope'; font-style: normal; font-display: swap; font-weight: 200 800; src: url(../fonts/manrope-latin-wght-normal.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+20BD; }
+:root {
+  --bg: #f7f6f2; --surface: #ffffff; --surface-2: #f0efea; --text: #1d1d1b; --text-2: #55554f; --muted: #8a8a83; --border: #e3e1da;
+  --accent: #2a78d6; --accent-soft: #e6f0fb; --good: #0a7a2f; --warn-bg: #fff6df; --warn-border: #f0cf74; --violet: #8a63d2;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141413; --surface: #1d1d1b; --surface-2: #262624; --text: #f1f0ea; --text-2: #c2c1ba; --muted: #8e8d86; --border: #34332f;
+    --accent: #5b9ef0; --accent-soft: #1d2b3d; --good: #3fbf63; --warn-bg: #2e2716; --warn-border: #6b5520;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141413; --surface: #1d1d1b; --surface-2: #262624; --text: #f1f0ea; --text-2: #c2c1ba; --muted: #8e8d86; --border: #34332f;
+  --accent: #5b9ef0; --accent-soft: #1d2b3d; --good: #3fbf63; --warn-bg: #2e2716; --warn-border: #6b5520;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 1px 5px; word-break: break-word; }
+pre { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; overflow-x: auto; font-size: 13.5px; line-height: 1.55; margin: 12px 0; }
+pre code { background: none; border: 0; padding: 0; }
+
+.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+.top-in { max-width: 1180px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 14px; }
+.logo { display: flex; align-items: center; gap: 9px; font-weight: 750; color: var(--text); text-decoration: none; }
+.logo span { width: 28px; height: 28px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; }
+.top .sp { flex: 1; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-weight: 650; font-size: 14px; text-decoration: none; border: 1px solid var(--border); color: var(--text); background: var(--surface); white-space: nowrap; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 48px; }
+.toc { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 92px); overflow-y: auto; padding: 28px 0; font-size: 14px; }
+.toc b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 6px; }
+.toc b:first-child { margin-top: 0; }
+.toc a { display: block; color: var(--text-2); text-decoration: none; padding: 4px 10px; border-radius: 8px; line-height: 1.4; }
+.toc a:hover { background: var(--surface-2); color: var(--text); }
+main { padding: 36px 0 80px; min-width: 0; }
+h1 { font-size: clamp(30px, 4vw, 42px); line-height: 1.15; letter-spacing: -.02em; margin: 0 0 12px; }
+.lead { font-size: 18px; color: var(--text-2); max-width: 720px; margin: 0 0 24px; }
+.parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+.part { display: block; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; text-decoration: none; color: var(--text); }
+.part:hover { border-color: var(--accent); }
+.part small { color: var(--muted); font-weight: 650; letter-spacing: .04em; text-transform: uppercase; font-size: 12px; }
+.part strong { display: block; font-size: 19px; margin: 4px 0; }
+.part p { margin: 0; color: var(--text-2); font-size: 14.5px; }
+
+section.part-h { margin-top: 56px; padding-top: 8px; border-top: 1px solid var(--border); }
+section.part-h > small { color: var(--accent); font-weight: 750; letter-spacing: .05em; text-transform: uppercase; font-size: 13px; }
+h2 { font-size: 30px; letter-spacing: -.015em; margin: 4px 0 8px; line-height: 1.2; }
+.step { margin-top: 40px; }
+h3 { font-size: 21px; margin: 0 0 8px; display: flex; gap: 12px; align-items: baseline; line-height: 1.3; }
+h3 .n { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: inline-grid; place-items: center; font-size: 15px; font-weight: 800; transform: translateY(-2px); }
+h4 { font-size: 17px; margin: 22px 0 6px; }
+p { margin: 8px 0; }
+ol, ul { padding-left: 22px; margin: 8px 0; }
+li { margin: 4px 0; }
+figure { margin: 16px 0 8px; }
+figure a { display: block; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.06); background: #fff; }
+figure.narrow img { max-width: 520px; width: 100%; }
+figcaption { color: var(--muted); font-size: 13.5px; margin-top: 8px; }
+.note { background: var(--accent-soft); border-radius: 12px; padding: 12px 16px; margin: 14px 0; font-size: 15px; }
+.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 12px; padding: 12px 16px; margin: 14px 0; font-size: 15px; }
+.check { list-style: none; padding: 0; }
+.check li { padding-left: 28px; position: relative; }
+.check li::before { content: '✓'; position: absolute; left: 4px; color: var(--good); font-weight: 800; }
+.tbl { overflow-x: auto; margin: 12px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); font-weight: 700; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 0; }
+.tabs a { font-size: 13.5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-2); text-decoration: none; background: var(--surface); }
+details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin: 10px 0; }
+summary { cursor: pointer; font-weight: 700; }
+details[open] summary { margin-bottom: 6px; }
+footer { border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; padding: 24px 20px; text-align: center; }
+
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 16px; }
+  .toc { display: none; }
+  .parts { grid-template-columns: minmax(0, 1fr); }
+  .top-in { padding: 10px 16px; }
+  .top .hide-m { display: none; }
+  h2 { font-size: 25px; }
+  h3 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="../"><span><svg width="16" height="16" viewBox="0 0 32 32"><path d="M8 22V14M14 22V9M20 22v-6M26 22V12" stroke="white" stroke-width="3.2" stroke-linecap="round" fill="none"/></svg></span>Пульс CRM</a>
+    <span class="hide-m" style="color:var(--muted)">/ Инструкция</span>
+    <span class="sp"></span>
+    <a class="btn hide-m" href="../app/">Войти</a>
+    <a class="btn primary" href="../app/#/login?mode=signup">Попробовать</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Содержание">
+    <b>Сайт</b>
+    <a href="#signup">1. Регистрация</a>
+    <a href="#code">2. Код для сайта</a>
+    <a href="#install">3. Установка на сайт</a>
+    <a href="#verify">4. Проверка</a>
+    <a href="#leads">5. Заявки и продажи</a>
+    <a href="#api">6. Продажи с сервера</a>
+    <a href="#utm">7. UTM-метки</a>
+    <a href="#sites">8. Несколько сайтов</a>
+    <a href="#reports">9. Что вы увидите</a>
+    <b>Реклама и ИИ-агент</b>
+    <a href="#how">1. Как работает агент</a>
+    <a href="#demo">2. Учебный кабинет</a>
+    <a href="#yandex">3. Яндекс Директ</a>
+    <a href="#vk">4. VK Реклама</a>
+    <a href="#google">5. Google Ads</a>
+    <a href="#telegram">6. Telegram Ads</a>
+    <a href="#mapping">7. Связь кампаний с продажами</a>
+    <a href="#rules">8. Правила агента</a>
+    <a href="#decisions">9. Решения и откат</a>
+    <a href="#faq">Частые вопросы</a>
+  </nav>
+
+  <main>
+    <h1>Инструкция по подключению</h1>
+    <p class="lead">Как за 15 минут подключить сайт, начать видеть продажи по каждому источнику и доверить рекламные бюджеты ИИ-агенту — со скриншотами каждого шага.</p>
+    <div class="parts">
+      <a class="part" href="#signup"><small>Часть 1 · 10–15 минут</small><strong>Подключение сайта</strong><p>Код на сайт, заявки и продажи, UTM-метки. После этого CRM видит, откуда пришёл каждый покупатель.</p></a>
+      <a class="part" href="#how"><small>Часть 2 · 5–20 минут</small><strong>Реклама и ИИ-агент</strong><p>Учебный кабинет, подключение Директа, VK, Google и Telegram, правила для агента.</p></a>
+    </div>
+    <div class="note">Нужен только доступ к редактированию сайта (или контакт того, кто его делал). Программист понадобится лишь для передачи продаж с сервера — шаг 6, он необязательный.</div>
+
+    <!-- ======================= ЧАСТЬ 1 ======================= -->
+    <section class="part-h" id="part-site">
+      <small>Часть 1</small>
+      <h2>Подключение сайта</h2>
+      <p>Код CRM — одна строка. Он собирает визиты, источники (реклама, поиск, соцсети, UTM), поведение на страницах и заявки из форм. Продажи привязываются к визиту, поэтому вы видите не «клики», а <b>выручку по каждому источнику и кампании</b>.</p>
+    </section>
+
+    <div class="step" id="signup">
+      <h3><span class="n">1</span>Зарегистрируйтесь</h3>
+      <p>Откройте <a href="../app/#/login?mode=signup">страницу регистрации</a>, укажите название компании, имя, email и пароль. 14 дней — бесплатно и без карты.</p>
+      <figure class="narrow"><a href="img/01-signup.jpg"><img src="img/01-signup.jpg" alt="Форма регистрации: название компании, имя, email, пароль" loading="lazy" width="420" height="508"></a></figure>
+      <p>После регистрации на почту придёт письмо с кодом для сайта и тремя шагами до первого отчёта. Сотрудников можно пригласить позже в разделе <b>Настройки</b>.</p>
+    </div>
+
+    <div class="step" id="code">
+      <h3><span class="n">2</span>Скопируйте код для сайта</h3>
+      <p>В меню слева откройте <b>Компания → Подключение</b>. Сайт «Мой сайт» уже создан. На вкладке <b>«1. Код на сайт»</b> нажмите <b>«Копировать»</b>.</p>
+      <figure><a href="img/02-integrations.jpg"><img src="img/02-integrations.jpg" alt="Раздел «Подключение сайта»: ключи и код для вставки" loading="lazy" width="1280" height="820"></a>
+        <figcaption>Публичный ключ — для кода на сайте. Секретный ключ — только для серверного API, никому его не показывайте.</figcaption></figure>
+      <figure><a href="img/03-snippet.jpg"><img src="img/03-snippet.jpg" alt="Вкладка «Код на сайт» с кнопкой «Копировать»" loading="lazy" width="992" height="264"></a>
+        <figcaption>Адрес и ключ в коде у каждого клиента свои — копируйте из своего кабинета.</figcaption></figure>
+    </div>
+
+    <div class="step" id="install">
+      <h3><span class="n">3</span>Вставьте код на сайт</h3>
+      <p>Код нужен на <b>всех страницах</b> сайта, в блоке <code>&lt;head&gt;</code>. Обычно для этого есть одно поле в настройках конструктора — вставлять на каждую страницу не нужно.</p>
+      <div class="tabs"><a href="#i-tilda">Tilda</a><a href="#i-wp">WordPress</a><a href="#i-bitrix">1С-Битрикс</a><a href="#i-other">Другие конструкторы</a><a href="#i-html">Свой сайт</a></div>
+      <figure><a href="img/07-cms.jpg"><img src="img/07-cms.jpg" alt="Подсказки по установке для Tilda, WordPress, Битрикс" loading="lazy" width="992" height="341"></a>
+        <figcaption>Краткие подсказки есть и в самой CRM — вкладка «Tilda, WordPress, 1С…».</figcaption></figure>
+
+      <h4 id="i-tilda">Tilda</h4>
+      <ol>
+        <li>Откройте проект → <b>Настройки сайта</b> → <b>Ещё</b>.</li>
+        <li>В пункте <b>«HTML-код для вставки внутрь HEAD»</b> нажмите «Редактировать» и вставьте код.</li>
+        <li>Сохраните и нажмите <b>«Опубликовать все страницы»</b> — без переопубликации код не появится.</li>
+      </ol>
+      <p>Заявки из форм Tilda попадут в CRM автоматически, отдельно настраивать ничего не нужно.</p>
+
+      <h4 id="i-wp">WordPress / WooCommerce</h4>
+      <ol>
+        <li>Установите плагин для вставки кода в шапку (например, «WPCode» или «Insert Headers and Footers»).</li>
+        <li>Вставьте код в поле <b>Header</b> и сохраните.</li>
+        <li>Если пользуетесь кеширующим плагином — очистите кеш.</li>
+      </ol>
+      <p>Без плагина: <b>Внешний вид → Редактор файлов темы → header.php</b>, вставить перед <code>&lt;/head&gt;</code>. При обновлении темы правка может пропасть, поэтому плагин надёжнее.</p>
+
+      <h4 id="i-bitrix">1С-Битрикс</h4>
+      <ol>
+        <li><b>Рабочий стол → Настройки → Настройки продукта → Сайты → Шаблоны сайтов</b>.</li>
+        <li>Откройте активный шаблон и вставьте код перед <code>&lt;/head&gt;</code> в «Внешний вид шаблона».</li>
+        <li>Сохраните и сбросьте кеш (<b>Настройки → Автокеширование → Очистка файлов кеша</b>).</li>
+      </ol>
+
+      <h4 id="i-other">Другие конструкторы (InSales, Wix, Craftum, OpenCart и др.)</h4>
+      <p>Ищите в настройках пункты «Счётчики», «Код в head», «Вставка кода» или «Метрика и аналитика» — туда же, куда обычно вставляют код Яндекс Метрики. CRM работает параллельно с Метрикой и не мешает ей.</p>
+
+      <h4 id="i-html">Свой сайт (HTML, React, Vue)</h4>
+      <p>Вставьте строку в общий шаблон перед <code>&lt;/head&gt;</code>. Переходы внутри одностраничных приложений отслеживаются автоматически.</p>
+    </div>
+
+    <div class="step" id="verify">
+      <h3><span class="n">4</span>Проверьте, что данные идут</h3>
+      <ol>
+        <li>Откройте свой сайт в обычном окне браузера (не через «просмотр кода» конструктора) и пройдите по 2–3 страницам.</li>
+        <li>В CRM откройте <b>Аналитика → Сводка</b>: в строке <b>«Сейчас на сайте»</b> появится 1 посетитель, через минуту — визит в отчётах.</li>
+      </ol>
+      <details><summary>Данные не появились — что проверить</summary>
+        <ul>
+          <li><b>Сайт переопубликован?</b> В Tilda и большинстве конструкторов код появляется только после публикации.</li>
+          <li><b>Включён блокировщик рекламы?</b> Проверьте в другом браузере или с телефона.</li>
+          <li><b>Указан домен у сайта в CRM?</b> Если да — данные принимаются только с этого домена и его поддоменов. Тестовый адрес конструктора (например, <code>project123.tilda.ws</code>) нужно либо убрать из ограничения, либо проверять на основном домене.</li>
+          <li><b>Код целиком?</b> Строка должна начинаться с <code>&lt;script</code> и заканчиваться <code>&lt;/script&gt;</code>.</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="step" id="leads">
+      <h3><span class="n">5</span>Заявки и продажи</h3>
+      <p><b>Заявки</b> собираются сами: любая отправленная на сайте форма с email или телефоном становится заявкой и карточкой клиента в разделе <b>CRM → Клиенты</b>, с источником, откуда человек пришёл.</p>
+      <p><b>Продажи</b> нужно передать, чтобы CRM считала выручку по источникам. Проще всего — одной строкой на странице «Спасибо за заказ»:</p>
+<pre><code>&lt;script&gt;
+  crm('purchase', { id: 'НОМЕР_ЗАКАЗА', amount: СУММА, email: 'email покупателя' });
+&lt;/script&gt;</code></pre>
+      <p>Номер, сумму и email подставляет ваш сайт (в шаблоне страницы «Спасибо» они обычно уже доступны). Готовые примеры — на вкладке <b>«2. Заявки и покупки»</b>:</p>
+      <figure><a href="img/05-events.jpg"><img src="img/05-events.jpg" alt="Вкладка «Заявки и покупки» с примерами кода" loading="lazy" width="992" height="369"></a></figure>
+      <p><b>Нет интернет-магазина?</b> Продажи по телефону, в офисе или через мессенджеры добавляйте вручную в <b>Аналитика → Продажи → «Добавить продажу»</b>, выбрав клиента — CRM свяжет продажу с источником, откуда клиент когда-то пришёл.</p>
+    </div>
+
+    <div class="step" id="api">
+      <h3><span class="n">6</span>Продажи с сервера магазина <span style="font-size:14px;color:var(--muted);font-weight:600">· для программиста, необязательно</span></h3>
+      <p>Самый точный способ: магазин сам сообщает CRM об оплате, возврате или отмене. Работает, даже если покупатель закрыл вкладку до страницы «Спасибо». Передайте программисту вкладку <b>«3. Серверный API»</b> — там готовый пример запроса с вашим ключом.</p>
+      <figure><a href="img/06-api.jpg"><img src="img/06-api.jpg" alt="Пример запроса к серверному API" loading="lazy" width="992" height="407"></a></figure>
+      <p>Повторная отправка с тем же номером заказа обновит его — так передаются возвраты и отмены. Для WooCommerce достаточно вебхука «Заказ оплачен» на адрес из примера.</p>
+    </div>
+
+    <div class="step" id="utm">
+      <h3><span class="n">7</span>UTM-метки в рекламе</h3>
+      <p>Чтобы CRM понимала, <b>какая именно кампания</b> принесла заказ, добавьте к ссылкам в объявлениях метки:</p>
+<pre><code>https://ваш-сайт.ru/?utm_source=yandex&amp;utm_medium=cpc&amp;utm_campaign=Поиск — брендовые запросы</code></pre>
+      <ul>
+        <li><code>utm_source</code> — площадка: <code>yandex</code>, <code>vk</code>, <code>google</code>, <code>telegram</code>;</li>
+        <li><code>utm_medium</code> — тип: <code>cpc</code> для платной рекламы;</li>
+        <li><code>utm_campaign</code> — <b>название кампании точно как в рекламном кабинете</b> (или любое своё — тогда укажите его в CRM, см. <a href="#mapping">«Связь кампаний с продажами»</a>).</li>
+      </ul>
+      <div class="note">Переходы из Директа и Google без меток CRM тоже узнаёт (по автоматическим параметрам <code>yclid</code> и <code>gclid</code>), но тогда видна только площадка, а не конкретная кампания. Для работы ИИ-агента метка <code>utm_campaign</code> обязательна.</div>
+    </div>
+
+    <div class="step" id="sites">
+      <h3><span class="n">8</span>Несколько сайтов</h3>
+      <p>В разделе <b>Подключение</b> нажмите <b>«Добавить сайт»</b>. У каждого сайта свой код; отчёты можно смотреть по одному сайту или по всем сразу. Число сайтов зависит от тарифа.</p>
+      <figure class="narrow"><a href="img/04-add-site.jpg"><img src="img/04-add-site.jpg" alt="Окно «Новый сайт»" loading="lazy" width="520" height="254"></a></figure>
+    </div>
+
+    <div class="step" id="reports">
+      <h3><span class="n">9</span>Что вы увидите</h3>
+      <p><b>Сводка</b> — выручка, заказы, конверсия, визиты и отказы с изменением к прошлому периоду, воронка от визита до заказа:</p>
+      <figure><a href="img/08-dashboard.jpg"><img src="img/08-dashboard.jpg" alt="Сводка: выручка, заказы, визиты, воронка" loading="lazy" width="1280" height="820"></a></figure>
+      <p><b>Источники</b> — сколько визитов и <b>сколько денег</b> принёс каждый канал и каждая кампания:</p>
+      <figure><a href="img/09-traffic.jpg"><img src="img/09-traffic.jpg" alt="Источники трафика: визиты и выручка по каналам и кампаниям" loading="lazy" width="1280" height="820"></a></figure>
+      <p>В разделе <b>Поведение</b> — страницы, с которых чаще всего уходят, в <b>Клиенты</b> — история визитов каждого покупателя. Каждый понедельник владельцу приходит письмо с итогами недели.</p>
+    </div>
+
+    <!-- ======================= ЧАСТЬ 2 ======================= -->
+    <section class="part-h" id="part-ads">
+      <small>Часть 2</small>
+      <h2>Реклама и ИИ-агент</h2>
+      <p>Раздел <b>Аналитика → Реклама</b> собирает расходы из рекламных кабинетов и сравнивает их с <b>реальной выручкой из CRM</b>. ИИ-агент каждый день решает, куда добавить бюджет, где урезать и что выключить, — строго в рамках ваших правил. Перед этим шагом желательно выполнить часть 1: без продаж в CRM агенту не на что опираться.</p>
+    </section>
+
+    <div class="step" id="how">
+      <h3><span class="n">1</span>Как работает агент</h3>
+      <figure><a href="img/25-how.jpg"><img src="img/25-how.jpg" alt="Схема из пяти шагов: данные, ИИ-агент, правила, контролёр, проверка результата" loading="lazy" width="992" height="333"></a></figure>
+      <ol>
+        <li><b>Данные.</b> Расходы и клики — из кабинетов (обновляются каждые 6 часов), заказы и выручка — из CRM.</li>
+        <li><b>ИИ-агент</b> раз в сутки (или по кнопке «Запустить анализ») изучает кампании и предлагает изменения. Каждое — с причиной и ожидаемым эффектом простыми словами.</li>
+        <li><b>Ваши правила.</b> Лимиты проверяет программа, а не ИИ: шаг изменения, потолки бюджета, минимум данных. Выйти за них агент не может.</li>
+        <li><b>Контролёр</b> — второй, независимый ИИ — перепроверяет каждое предложение по цифрам.</li>
+        <li><b>Проверка результата.</b> Через 48 часов система сравнивает «до» и «после» и при ухудшении сама возвращает прежние настройки — и присылает письмо.</li>
+      </ol>
+      <p>Сам применяется только то, что одобрили <b>и правила, и контролёр</b>, и только на кампаниях, где вы включили автопилот. Всё остальное ждёт вашего решения.</p>
+    </div>
+
+    <div class="step" id="demo">
+      <h3><span class="n">2</span>Начните с учебного кабинета</h3>
+      <p>Чтобы понять, как всё устроено, не рискуя деньгами, в разделе <b>Реклама</b> нажмите <b>«Создать учебный кабинет»</b>:</p>
+      <figure><a href="img/20-ads-start.jpg"><img src="img/20-ads-start.jpg" alt="Выбор: учебный кабинет или подключение своего" loading="lazy" width="992" height="249"></a></figure>
+      <p>Появятся четыре кампании со статистикой за 30 дней и подсказки — что делать дальше:</p>
+      <figure><a href="img/26-tour.jpg"><img src="img/26-tour.jpg" alt="Пошаговый тур по учебному кабинету" loading="lazy" width="992" height="231"></a></figure>
+      <p>Кампании специально разные: одна отлично окупается, одна — нормально, одна в убыток, одна тратит деньги впустую. Колонка <b>«На 1 ₽ рекламы»</b> показывает, сколько рублей выручки вернул каждый рубль расхода: больше 1 — реклама окупается.</p>
+      <figure><a href="img/27-campaigns.jpg"><img src="img/27-campaigns.jpg" alt="Таблица кампаний: расход, заказы, выручка, окупаемость, бюджет, автопилот" loading="lazy" width="992" height="372"></a></figure>
+      <p>Нажмите <b>«Запустить анализ»</b>. Агент работает 1–3 минуты, страница обновится сама:</p>
+      <figure><a href="img/28-running.jpg"><img src="img/28-running.jpg" alt="Агент изучает кампании" loading="lazy" width="992" height="94"></a></figure>
+      <p>Дальше вы увидите отчёт агента, применённые изменения и те, что ждут вас (подробно — в <a href="#decisions">шаге 9</a>). Последний шаг тура — <b>«Перемотать на 3 дня вперёд»</b>: в учебном кабинете можно «прожить» 3 дня за секунду и увидеть, как контролёр проверит результат.</p>
+      <div class="note">В учебном кабинете всё по-настоящему, кроме денег: агент и контролёр работают так же, как с реальными кампаниями, но изменения не уходят ни на одну площадку. Удалить его можно в карточке «Кабинеты».</div>
+    </div>
+
+    <div class="step" id="yandex">
+      <h3><span class="n">3</span>Подключение Яндекс Директа</h3>
+      <p>CRM работает с Директом через его официальный API. Для этого нужен OAuth-токен. Один раз это займёт 10–20 минут, плюс время на одобрение заявки Яндексом.</p>
+      <ol>
+        <li><b>Зарегистрируйте приложение.</b> На <a href="https://oauth.yandex.ru/client/new" rel="noopener">oauth.yandex.ru</a> под логином, у которого есть доступ к рекламному кабинету, создайте приложение «Для доступа к API или отладки» и отметьте доступ <b>«Использование API Яндекс Директа»</b>. Сохраните ClientID приложения.</li>
+        <li><b>Подайте заявку на доступ к API</b> в веб-интерфейсе Директа: раздел <b>«Инструменты» → «API»</b>, укажите ClientID приложения. Яндекс проверяет заявку — обычно от нескольких часов до нескольких дней.</li>
+        <li><b>Получите токен.</b> Откройте в браузере ссылку (вместо <code>ClientID</code> — ваш):
+<pre><code>https://oauth.yandex.ru/authorize?response_type=token&amp;client_id=ClientID</code></pre>
+          Разрешите доступ — на странице появится токен. Скопируйте его.</li>
+        <li><b>Подключите в CRM:</b> <b>Реклама → Кабинеты → «Подключить»</b>, вкладка <b>«Яндекс Директ»</b>, вставьте токен. Агентствам — ещё и логин клиента.</li>
+      </ol>
+      <figure class="narrow"><a href="img/21-connect-yandex.jpg"><img src="img/21-connect-yandex.jpg" alt="Окно подключения Яндекс Директа" loading="lazy" width="520" height="528"></a></figure>
+      <p>Сразу после подключения CRM загрузит кампании и статистику за 30 дней. Если появилась ошибка — она будет видна в карточке кабинета: чаще всего это ещё не одобренная заявка или токен от другого логина.</p>
+      <p>Официальная документация: <a href="https://yandex.ru/dev/direct/doc/ru/start" rel="noopener">«Как начать работу с API Директа»</a>.</p>
+    </div>
+
+    <div class="step" id="vk">
+      <h3><span class="n">4</span>Подключение VK Рекламы</h3>
+      <ol>
+        <li>Доступ к API VK Рекламы выдаётся по запросу: напишите в поддержку кабинета <a href="https://ads.vk.com" rel="noopener">ads.vk.com</a>, что хотите управлять кампаниями через API из своей CRM.</li>
+        <li>После одобрения в настройках кабинета, в разделе <b>«Доступ к API»</b>, появятся данные приложения, по которым выпускается токен доступа.</li>
+        <li>В CRM: <b>Реклама → «Подключить»</b>, вкладка <b>«VK Реклама»</b>, вставьте токен.</li>
+      </ol>
+      <figure class="narrow"><a href="img/22-connect-vk.jpg"><img src="img/22-connect-vk.jpg" alt="Окно подключения VK Рекламы" loading="lazy" width="520" height="440"></a></figure>
+      <div class="warn">У токенов VK Рекламы ограниченный срок действия. Если в карточке кабинета появилась ошибка авторизации — выпустите новый токен, удалите кабинет в CRM и подключите заново (история решений по нему будет удалена, статистика загрузится снова).</div>
+    </div>
+
+    <div class="step" id="google">
+      <h3><span class="n">5</span>Подключение Google Ads</h3>
+      <div class="warn">С 2022 года Google Ads не показывает рекламу в России. Подключение пригодится, если вы рекламируетесь в других странах.</div>
+      <ol>
+        <li>Администратор сервера CRM один раз указывает данные разработчика Google Ads API (developer token и OAuth-клиент) — для облачной версии это уже сделано.</li>
+        <li>Вы получаете refresh-токен своего аккаунта Google Ads по <a href="https://developers.google.com/google-ads/api/docs/oauth/overview" rel="noopener">инструкции Google</a>.</li>
+        <li>В CRM укажите <b>ID клиента</b> (10 цифр вверху кабинета Google Ads, например <code>123-456-7890</code>), refresh-токен и, если вход через управляющий аккаунт (MCC), его ID.</li>
+      </ol>
+      <figure class="narrow"><a href="img/23-connect-google.jpg"><img src="img/23-connect-google.jpg" alt="Окно подключения Google Ads" loading="lazy" width="520" height="596"></a></figure>
+    </div>
+
+    <div class="step" id="telegram">
+      <h3><span class="n">6</span>Telegram Ads — статистика из файла</h3>
+      <p>У Telegram Ads нет открытого API, поэтому агент не может менять там бюджеты сам. Но он учтёт расходы в анализе и подскажет, что сделать вручную.</p>
+      <ol>
+        <li>В CRM: <b>Реклама → «Подключить»</b>, вкладка <b>«Telegram Ads»</b>, введите название.</li>
+        <li>В кабинете Telegram Ads выгрузите статистику по дням в CSV.</li>
+        <li>Загрузите файл в открывшемся окне (или позже — кнопка <b>«Загрузить CSV»</b> в карточке кабинета). Нужны столбцы: дата, кампания (или объявление), расход; показы и клики — по желанию.</li>
+      </ol>
+      <figure class="narrow"><a href="img/34-telegram-csv.jpg"><img src="img/34-telegram-csv.jpg" alt="Загрузка CSV со статистикой Telegram Ads" loading="lazy" width="520" height="402"></a></figure>
+      <p>Обновляйте файл раз в несколько дней. В ссылках объявлений ставьте <code>utm_campaign</code> = название кампании из файла.</p>
+    </div>
+
+    <div class="step" id="mapping">
+      <h3><span class="n">7</span>Связь кампаний с продажами</h3>
+      <p>Агент считает окупаемость по выручке из CRM. Чтобы найти заказы кампании, CRM ищет визиты с <code>utm_campaign</code>, равным её названию. Если в ссылках стоит другая метка (например, латиницей <code>brand_search</code>), нажмите на строку <b>«utm: …»</b> под названием кампании в таблице и укажите метку.</p>
+      <figure><a href="img/27-campaigns.jpg"><img src="img/27-campaigns.jpg" alt="Таблица кампаний с меткой utm и переключателем автопилота" loading="lazy" width="992" height="372"></a>
+        <figcaption>Справа — переключатель «Автопилот»: разрешено ли агенту менять кампанию без вас. У новых подключённых кампаний он выключен.</figcaption></figure>
+      <div class="note">Если у кампании есть расход, но 0 заказов при живых продажах на сайте — почти всегда дело в метке. Проверьте ссылки объявлений и раздел <b>Источники</b>: там видно, с какими <code>utm_campaign</code> приходят визиты.</div>
+    </div>
+
+    <div class="step" id="rules">
+      <h3><span class="n">8</span>Правила для агента</h3>
+      <p>Карточка <b>«Правила для агента»</b> внизу страницы. Эти лимиты проверяет программа — ИИ не может их обойти.</p>
+      <figure class="narrow"><a href="img/32-policy.jpg"><img src="img/32-policy.jpg" alt="Форма правил агента" loading="lazy" width="488" height="647"></a></figure>
+      <div class="tbl"><table>
+        <thead><tr><th>Настройка</th><th>Что значит</th><th>С чего начать</th></tr></thead>
+        <tbody>
+          <tr><td>Режим</td><td><b>Только советы</b> — агент предлагает, применяете вы. <b>Автопилот</b> — одобренное правилами и контролёром применяется сразу. <b>Выключен</b> — агент не запускается.</td><td>Первую неделю — «Только советы», потом автопилот</td></tr>
+          <tr><td>Шаг изменения бюджета</td><td>На сколько процентов агент может изменить бюджет за один раз</td><td>20%</td></tr>
+          <tr><td>Не трогать после изменения</td><td>Пауза, чтобы успела накопиться статистика; через это же время проверяется результат</td><td>48 ч</td></tr>
+          <tr><td>Потолок одной кампании / всех кампаний</td><td>Больше этого дневного бюджета агент не поставит никогда — даже по вашему подтверждению</td><td>Ваш реальный максимум в день</td></tr>
+          <tr><td>Цель: выручка на 1 ₽ рекламы</td><td>Ориентир окупаемости. 3 — каждый рубль рекламы должен приносить 3 ₽ выручки</td><td>Зависит от наценки; с маржой 30% окупаемость начинается примерно с 3,3</td></tr>
+          <tr><td>Цель: цена заказа не выше</td><td>Сколько вы готовы платить рекламе за один заказ</td><td>По желанию</td></tr>
+          <tr><td>Минимум кликов за 14 дней</td><td>Меньше — данных мало, агент кампанию не трогает</td><td>100</td></tr>
+          <tr><td>Откатить, если хуже на</td><td>Порог ухудшения окупаемости, после которого изменение отменяется само</td><td>30%</td></tr>
+          <tr><td>Выключать кампании</td><td>Можно ли агенту останавливать кампании без продаж. Последнюю работающую кампанию он не выключит</td><td>Включено</td></tr>
+          <tr><td>Контролёр</td><td>Второй ИИ перепроверяет каждое решение</td><td>Не выключать</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="step" id="decisions">
+      <h3><span class="n">9</span>Решения агента, подтверждение и откат</h3>
+      <p>После анализа появляется <b>отчёт агента</b> — коротко, что он увидел и что сделал:</p>
+      <figure><a href="img/31-report.jpg"><img src="img/31-report.jpg" alt="Отчёт агента" loading="lazy" width="992" height="154"></a></figure>
+      <p>Изменения, которые агент не применил сам, собраны в блоке <b>«Ждут вашего решения»</b>. У каждого видно, что предлагается, почему, и цепочка проверок: <i>агент предложил → правила → контролёр → решение → проверка результата</i>.</p>
+      <figure><a href="img/29-pending.jpg"><img src="img/29-pending.jpg" alt="Карточки изменений, ожидающих решения" loading="lazy" width="992" height="471"></a>
+        <figcaption>«Контролёр не уверен» — поэтому изменение ждёт вас. Нажмите «Применить» или «Отклонить».</figcaption></figure>
+      <p>Применённые изменения — в <b>«Истории решений»</b>. Любое можно вернуть кнопкой <b>«Откатить»</b>:</p>
+      <figure><a href="img/30-history.jpg"><img src="img/30-history.jpg" alt="Изменение, применённое автопилотом" loading="lazy" width="954" height="206"></a></figure>
+      <p>Через заданное время (по умолчанию 48 ч) система сравнивает результат. Если стало хуже порога — возвращает прежние настройки и присылает письмо. Если заказов слишком мало для честного сравнения, проверка откладывается (до недели), а не выносит случайный вердикт.</p>
+      <figure><a href="img/33-checked.jpg"><img src="img/33-checked.jpg" alt="Результат проверки изменения" loading="lazy" width="954" height="228"></a></figure>
+      <div class="tbl"><table>
+        <thead><tr><th>Статус</th><th>Что значит</th></tr></thead>
+        <tbody>
+          <tr><td>Ждёт решения</td><td>Нужно ваше «Применить» или «Отклонить»</td></tr>
+          <tr><td>Применено</td><td>Изменение в кабинете, ждёт проверки результата</td></tr>
+          <tr><td>Проверено: результат в порядке</td><td>Изменение оставлено</td></tr>
+          <tr><td>Откатено контролёром</td><td>Стало хуже — вернули как было, вам пришло письмо</td></tr>
+          <tr><td>Отклонено правилами</td><td>Предложение нарушало потолки бюджета или минимум площадки — не применялось</td></tr>
+          <tr><td>Ошибка применения</td><td>Площадка не приняла изменение (например, истёк токен) — причина указана в карточке</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <section class="part-h" id="faq">
+      <small>Вопросы</small>
+      <h2>Частые вопросы</h2>
+      <details><summary>Может ли агент потратить больше, чем я разрешил?</summary><p>Нет. Потолки бюджета проверяет программа перед каждым изменением — и для агента, и для ваших ручных подтверждений. Агент меняет только дневные бюджеты и включает/выключает кампании; ставки, объявления, ключевые слова и платёжные данные он не трогает.</p></details>
+      <details><summary>Что если агент ошибётся?</summary><p>Три уровня защиты: правила в коде, независимый контролёр и автоматическая проверка результата с откатом. Плюс любое изменение можно откатить вручную одной кнопкой, а режим «Только советы» не даёт агенту менять что-либо без вас.</p></details>
+      <details><summary>Как часто работает агент?</summary><p>Раз в сутки автоматически, если режим не «Выключен». Плюс в любой момент — кнопкой «Запустить анализ» (до 6 раз в час).</p></details>
+      <details><summary>Почему у кампании 0 заказов, хотя продажи с рекламы есть?</summary><p>CRM не нашла визиты с меткой этой кампании. Проверьте <code>utm_campaign</code> в ссылках объявлений и сопоставление в таблице кампаний (<a href="#mapping">шаг 7</a>), а также что продажи передаются в CRM (<a href="#leads">часть 1, шаг 5</a>).</p></details>
+      <details><summary>Где хранятся токены рекламных кабинетов?</summary><p>В базе CRM в зашифрованном виде, в интерфейсе показываются только в сокращённом. Удалить подключение можно в любой момент — в самом рекламном кабинете при этом ничего не меняется.</p></details>
+      <details><summary>Кто в команде что может?</summary><p>Подключать кабинеты, менять правила и автопилот — владелец и администраторы. Запускать анализ, применять и откатывать изменения — ещё и менеджеры. Наблюдатели только смотрят.</p></details>
+      <p style="margin-top:20px">Остались вопросы — ответьте на любое письмо от Пульс CRM, мы поможем с подключением.</p>
+    </section>
+  </main>
+</div>
+<footer>© Пульс CRM · <a href="../">На главную</a> · <a href="../app/">Войти в CRM</a></footer>
+</body>
+</html>
