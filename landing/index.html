@@ -65,7 +65,9 @@ header.scrolled { background: rgba(7,11,22,.78); backdrop-filter: saturate(1.4) 
 .nav { display: flex; align-items: center; gap: 32px; height: 72px; }
 .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; font-size: 19px; text-decoration: none; letter-spacing: -0.01em; }
 .logo { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, #3b82f6, #22d3ee); display: grid; place-items: center; box-shadow: 0 6px 18px -6px rgba(34,211,238,.6); }
-.nav-links { display: flex; gap: 28px; }
+.nav-links { display: flex; gap: 24px; white-space: nowrap; }
+.nav .brand { white-space: nowrap; }
+@media (max-width: 1320px) { .nav-links .nl-x { display: none; } }
 .nav-links a { color: var(--text-2); text-decoration: none; font-size: 15px; font-weight: 600; transition: color .15s; }
 .nav-links a:hover { color: var(--text); }
 .nav .sp { flex: 1; }
@@ -229,7 +231,37 @@ footer a { color: var(--text-2); text-decoration: none; } footer a:hover { color
 /* появление при прокрутке */
 .js .reveal { opacity: 0; transform: translateY(26px); transition: opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1); }
 .js .reveal.in { opacity: 1; transform: none; }
+/* ИИ-агент */
+.ai { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 56px; align-items: center; }
+.ai-steps { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 4px; counter-reset: s; }
+.ai-steps li { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 12px 0; position: relative; }
+.ai-steps li:not(:last-child)::after { content: ''; position: absolute; left: 19px; top: 52px; bottom: -6px; width: 2px; background: linear-gradient(var(--line-2), transparent); }
+.ai-steps .i { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(34,211,238,.08); border: 1px solid rgba(34,211,238,.28); color: var(--cyan); font-weight: 800; font-size: 15px; }
+.ai-steps b { display: block; font-size: 17px; margin-bottom: 2px; }
+.ai-steps span { color: var(--text-2); font-size: 15.5px; }
+.ai-board { position: relative; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)); border: 1px solid var(--line-2); border-radius: 22px; padding: 22px; box-shadow: 0 40px 100px -40px rgba(34,211,238,.35); display: grid; gap: 12px; }
+.ai-board-h { display: flex; align-items: center; gap: 10px; font-weight: 750; font-size: 15px; color: var(--text-2); }
+.ai-board-h .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(52,211,153,.6); animation: pl 2s infinite; }
+@keyframes pl { 70% { box-shadow: 0 0 0 9px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
+.dec { background: rgba(7,11,22,.6); border: 1px solid var(--line); border-left: 3px solid var(--green); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; }
+.dec.off { border-left-color: var(--red); } .dec.chk { border-left-color: var(--cyan); }
+.dec-t { display: flex; justify-content: space-between; gap: 10px; font-weight: 750; font-size: 15px; flex-wrap: wrap; }
+.dec-t em { font-style: normal; font-size: 12.5px; font-weight: 700; color: var(--green); background: rgba(52,211,153,.1); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.dec.off .dec-t em { color: #fca5a5; background: rgba(248,113,113,.1); } .dec.chk .dec-t em { color: var(--cyan); background: rgba(34,211,238,.1); }
+.dec-v { font-size: 18px; font-weight: 800; } .dec-v s { color: var(--muted); font-weight: 600; margin-right: 6px; }
+.dec p { color: var(--text-2); font-size: 14.5px; }
+.dec-trail { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12.5px; color: var(--text-2); }
+.dec-trail span { border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
+.dec-trail span::after { content: ' ✓'; color: var(--green); font-weight: 800; }
+.ai-plat { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+.ai-plat span { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 650; padding: 7px 12px; border-radius: 999px; background: rgba(255,255,255,.04); border: 1px solid var(--line); }
+.ai-plat i { width: 8px; height: 8px; border-radius: 50%; }
+.ai-plat small { color: var(--muted); font-weight: 600; }
+.ai-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+@media (max-width: 980px) { .ai { grid-template-columns: minmax(0, 1fr); gap: 36px; } }
+@media (max-width: 700px) { .ai-board { padding: 14px; } .ai-cta .btn { width: 100%; } }
 @media (prefers-reduced-motion: reduce) {
+  .ai-board-h .pulse { animation: none; }
   .js .reveal { opacity: 1; transform: none; transition: none; }
   .float { animation: none; }
   .frame { transform: none; transition: none; }
@@ -285,10 +317,11 @@ footer a { color: var(--text-2); text-decoration: none; } footer a:hover { color
     <nav class="nav-links" aria-label="Разделы">
       <a href="#how-money">Как это работает</a>
       <a href="#features">Возможности</a>
+      <a href="#ai">ИИ-агент</a>
       <a href="#pricing">Тарифы</a>
-      <a href="#partners">Партнёрам</a>
+      <a class="nl-x" href="#partners">Партнёрам</a>
       <a href="#faq">Вопросы</a>
-      <a href="help/">Инструкция</a>
+      <a class="nl-x" href="help/">Инструкция</a>
     </nav>
     <span class="sp"></span>
     <a class="btn btn-ghost" href="app/">Войти</a>
@@ -507,6 +540,52 @@ footer a { color: var(--text-2); text-decoration: none; } footer a:hover { color
   </section>
 
   <!-- 5. Подключение -->
+  <!-- ИИ-агент для рекламы -->
+  <section id="ai" style="padding-top:60px">
+    <div class="wrap ai">
+      <div class="reveal">
+        <span class="kicker">ИИ-агент для рекламы</span>
+        <h2 style="margin-top:18px">Реклама, которая <span class="grad">сама становится выгоднее</span></h2>
+        <p class="lead" style="margin-top:18px">Каждый день агент сравнивает расход каждой кампании с реальной выручкой из CRM и переносит бюджет туда, где он окупается. Строго в рамках ваших лимитов — и с проверкой результата.</p>
+        <ol class="ai-steps">
+          <li><div class="i">1</div><div><b>Анализирует деньги, а не клики</b><span>Сколько рублей выручки вернул каждый рубль рекламы — по каждой кампании.</span></div></li>
+          <li><div class="i">2</div><div><b>Предлагает с объяснением</b><span>Добавить бюджет, урезать, выключить — и простыми словами почему.</span></div></li>
+          <li><div class="i">3</div><div><b>Не выходит за ваши лимиты</b><span>Потолки бюджета и шаг изменений проверяет код, а не ИИ. Второй ИИ-контролёр перепроверяет каждое решение.</span></div></li>
+          <li><div class="i">4</div><div><b>Проверяет себя и откатывает</b><span>Через 48 часов сравнивает «до» и «после». Стало хуже — возвращает как было и пишет вам.</span></div></li>
+        </ol>
+        <div class="ai-plat" aria-label="Поддерживаемые площадки">
+          <span><i style="background:#fc3f1d"></i>Яндекс Директ</span>
+          <span><i style="background:#0077ff"></i>VK Реклама</span>
+          <span><i style="background:#34a853"></i>Google Ads</span>
+          <span><i style="background:#2aabee"></i>Telegram Ads <small>статистика</small></span>
+        </div>
+        <div class="ai-cta">
+          <a class="btn btn-primary" href="app/#/login?mode=signup">Попробовать на учебных кампаниях <span class="arrow">→</span></a>
+          <a class="btn btn-ghost" href="help/#how">Как это устроено</a>
+        </div>
+      </div>
+      <div class="ai-board reveal" role="img" aria-label="Пример решений агента: бюджет брендового поиска увеличен, медийная кампания без заказов выключена, через 48 часов результат проверен">
+        <div class="ai-board-h"><span class="pulse"></span>Отчёт агента · сегодня, 09:00</div>
+        <div class="dec">
+          <div class="dec-t">Поиск — брендовые запросы <em>применено автопилотом</em></div>
+          <div class="dec-v"><s>1 500 ₽</s>→ 1 800 ₽ в день</div>
+          <p>Возвращает 5,2 ₽ на каждый рубль и каждый день упирается в бюджет — часть покупателей не видят рекламу.</p>
+          <div class="dec-trail"><span>в рамках лимитов</span><span>контролёр одобрил</span></div>
+        </div>
+        <div class="dec off">
+          <div class="dec-t">Медийная — охват <em>выключена</em></div>
+          <div class="dec-v">−2 500 ₽ в день</div>
+          <p>За 14 дней — 33 000 ₽ расхода и ни одного заказа.</p>
+          <div class="dec-trail"><span>в рамках лимитов</span><span>контролёр одобрил</span></div>
+        </div>
+        <div class="dec chk">
+          <div class="dec-t">Проверка через 48 часов <em>результат в порядке</em></div>
+          <p>Выручка не снизилась, расход — на 2 500 ₽ в день меньше. Изменения оставлены.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="how" style="padding-top:60px">
     <div class="wrap">
       <div class="head center reveal">
@@ -608,6 +687,7 @@ footer a { color: var(--text-2); text-decoration: none; } footer a:hover { color
       <div class="faq">
         <details class="reveal"><summary>У меня сайт на Tilda — подойдёт?</summary><p>Да. Код вставляется в «Настройки сайта → Ещё → HTML-код для вставки в HEAD». Заявки из форм Tilda попадут в CRM автоматически. Так же подключаются WordPress, InSales, 1С-Битрикс и сайты на своём движке.</p></details>
         <details class="reveal"><summary>У нас уже есть amoCRM или Битрикс24. Зачем ещё одна система?</summary><p>Пульс отвечает на вопрос, который они не решают без интегратора: какая реклама приводит деньги. Можно пользоваться Пульсом для аналитики, блога и соцсетей, а сделки вести там, где привыкли.</p></details>
+        <details class="reveal"><summary>Может ли ИИ-агент потратить лишнее на рекламу?</summary><p>Нет. Потолки дневного бюджета и максимальный шаг изменения проверяет программа, а не ИИ, — выйти за них агент не может. Каждое решение перепроверяет второй ИИ-контролёр, а через 48 часов система сравнивает результат и при ухудшении сама возвращает прежние настройки. Можно включить режим «только советы» — тогда агент ничего не меняет без вашего подтверждения.</p></details>
         <details class="reveal"><summary>Как продажи попадают в Пульс?</summary><p>Тремя способами: кодом на странице «Спасибо за заказ», запросом от вашего магазина по API при оплате или вручную — для офлайн-продаж и звонков. Каждая продажа привязывается к источнику визита.</p></details>
         <details class="reveal"><summary>Что будет, если я не продлю оплату?</summary><p>Через 3 дня после окончания оплаты доступ к панели приостановится. Данные не удаляются, статистика с сайта продолжает собираться, публикации на сайте остаются на месте. После оплаты всё снова доступно.</p></details>
         <details class="reveal"><summary>Можно оплатить по счёту от юрлица?</summary><p>Да. В разделе «Тариф и оплата» укажите реквизиты — счёт сформируется сразу. Доступ продлится после поступления денег.</p></details>
