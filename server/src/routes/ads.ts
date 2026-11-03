@@ -7,6 +7,7 @@ import { applyAction, checkPolicy, getPolicy, performance, rollbackAction, syncA
 import { aiEnabled, AGENT_MODEL, runMonitor, runOptimizer } from '../lib/ads/agent.js';
 import { createDemoAccount, simulateDays } from '../lib/ads/demo.js';
 import { PlatformError } from '../lib/ads/platforms.js';
+import { tenantState } from '../lib/billing.js';
 
 const accountBody = z.discriminatedUnion('platform', [
   z.object({ platform: z.literal('yandex'), name: z.string().trim().min(1).max(100), token: z.string().trim().min(10).max(500), login: z.string().trim().max(100).optional() }),
@@ -56,7 +57,8 @@ export default async function adsRoutes(app: FastifyInstance) {
 
   app.get('/api/ads/overview', read, async (req) => {
     const tid = req.user.tid;
-    const [accounts, campaigns, policy, runs, actions] = await Promise.all([
+    const [state, accounts, campaigns, policy, runs, actions] = await Promise.all([
+      tenantState(tid),
       q(`SELECT id, platform, name, login, active, last_sync_at, sync_error, created_at FROM ad_accounts WHERE tenant_id=$1 ORDER BY created_at`, [tid]),
       performance(tid, 14),
       getPolicy(tid),
@@ -65,7 +67,8 @@ export default async function adsRoutes(app: FastifyInstance) {
          WHERE x.tenant_id=$1 ORDER BY x.created_at DESC LIMIT 150`, [tid]),
     ]);
     const running = runs.some((r) => r.status === 'running' && Date.now() - new Date(r.started_at).getTime() < 15 * 60000);
-    return { ai_enabled: aiEnabled(), model: AGENT_MODEL, accounts, campaigns, policy, runs, actions, running };
+    // ai_plan — входит ли агент в тариф (или подключена опция); без него работают статистика, ручные изменения и проверка результата
+    return { ai_enabled: aiEnabled(), ai_plan: state.ai, model: AGENT_MODEL, accounts, campaigns, policy, runs, actions, running };
   });
 
   // ---------- Подключения ----------
@@ -147,6 +150,8 @@ export default async function adsRoutes(app: FastifyInstance) {
   // ---------- Запуск агента ----------
   app.post('/api/ads/run', { ...manager, config: { rateLimit: { max: 6, timeWindow: '1 hour' } } }, async (req, reply) => {
     if (!aiEnabled()) return reply.code(400).send({ error: 'ai_disabled' });
+    // 403, а не 402: 402 панель понимает как «аккаунт не оплачен» и уводит на оплату
+    if (!(await tenantState(req.user.tid)).ai) return reply.code(403).send({ error: 'plan_ai' });
     const running = await one(`SELECT 1 FROM agent_runs WHERE tenant_id=$1 AND kind='optimize' AND status='running' AND started_at > now() - interval '15 minutes'`, [req.user.tid]);
     if (running) return reply.code(409).send({ error: 'already_running' });
     const camps = await one('SELECT count(*)::int AS n FROM ad_campaigns WHERE tenant_id=$1', [req.user.tid]);
