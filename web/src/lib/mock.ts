@@ -227,6 +227,47 @@ function billingState() {
   return { status: 'trial', plan: 'business', limits: lim('business'), trial_ends_at: billing.trial_ends_at, paid_until: null, days_left: Math.ceil((Date.parse(billing.trial_ends_at) - Date.now()) / DAY), ai: true, ai_addon: false };
 }
 setAiPlan(() => billingState().ai);
+// ---------- Кабинет владельца платформы (демо): компании-клиенты сервиса и их оплаты ----------
+const PLATFORM_TENANTS: any[] = (() => {
+  const names = ['Мебельный салон «Уют»', 'Клиника «Дента Плюс»', 'Онлайн-школа «Код»', 'Автосервис на Ленина', 'Студия «Пиксель»', 'Цветы у дома', 'Юрбюро Ковалёв', 'Фитнес «Атлет»',
+    'Магазин «Эко-товары»', 'Кофейня «Зерно»', 'Ремонт квартир СПб', 'Детский центр «Умка»', 'Агентство «Рост»', 'Салон «Лаванда»'];
+  const plans = ['business', 'start', 'business', 'start', 'agency', 'start', 'business', 'pro', 'business', 'start', 'business', 'start', 'agency', 'business'];
+  const list: any[] = names.map((name, i) => {
+    const created = now - (20 + i * 23) * DAY;
+    const paying = i % 5 !== 3;
+    const plan = plans[i % plans.length];
+    const price = PLANS_DEMO.find((x) => x.id === plan)!.price + (plan === 'start' && i % 2 === 1 ? 1500 : 0);
+    const months = Math.max(1, Math.floor((now - created) / (30 * DAY)) - 0);
+    return {
+      id: `00000000-0000-4000-a000-${String(i + 1).padStart(12, '0')}`, name, plan, billing_period: i === 4 ? 'year' : 'month', ai_addon: plan === 'start' && i % 2 === 1,
+      trial_ends_at: new Date(created + 14 * DAY).toISOString(), paid_until: paying ? new Date(now + ((i * 7) % 28 + 2) * DAY).toISOString() : null,
+      created_at: new Date(created).toISOString(), has_card: i % 3 !== 0, owner_email: `owner${i + 1}@example.ru`, sites: 1 + (i % 3),
+      paid_total: paying ? price * months : 0,
+    };
+  });
+  // свежие регистрации на пробном периоде
+  list.unshift(
+    { id: '00000000-0000-4000-a000-000000000101', name: 'Пекарня «Колос»', plan: 'business', billing_period: null, ai_addon: false, trial_ends_at: new Date(now + 11 * DAY).toISOString(), paid_until: null, created_at: new Date(now - 3 * DAY).toISOString(), has_card: false, owner_email: 'hello@kolos.ru', sites: 1, paid_total: 0 },
+    { id: '00000000-0000-4000-a000-000000000102', name: tenant.name, plan: 'business', billing_period: null, ai_addon: false, trial_ends_at: new Date(now + 9 * DAY).toISOString(), paid_until: null, created_at: new Date(now - 5 * DAY).toISOString(), has_card: false, owner_email: 'demo@example.com', sites: 2, paid_total: 0 },
+  );
+  return list;
+})();
+const PLATFORM_INVOICES: any[] = [
+  { id: '00000000-0000-4000-a000-000000000201', plan: 'pro', period: 'year', amount: 67104, created_at: new Date(now - 2 * DAY).toISOString(), company: { name: 'ООО «Фитнес Атлет»', inn: '7801234567' }, tenant_name: 'Фитнес «Атлет»' },
+  { id: '00000000-0000-4000-a000-000000000202', plan: 'business', period: 'month', amount: 2990, created_at: new Date(now - DAY).toISOString(), company: { name: 'ИП Ковалёв А. С.', inn: '781234567890' }, tenant_name: 'Юрбюро Ковалёв' },
+];
+function platformOverview() {
+  const paying = PLATFORM_TENANTS.filter((t) => t.paid_until && Date.parse(t.paid_until) > Date.now());
+  const monthly = (t: any) => {
+    const p = PLANS_DEMO.find((x) => x.id === t.plan)!.price + (t.ai_addon ? 1500 : 0);
+    return t.billing_period === 'year' ? Math.round(p * 0.8) : p;
+  };
+  return {
+    totals: { tenants: PLATFORM_TENANTS.length, paying: paying.length, mrr: paying.reduce((s, t) => s + monthly(t), 0), trials: PLATFORM_TENANTS.filter((t) => !t.paid_until && Date.parse(t.trial_ends_at) > Date.now()).length },
+    tenants: PLATFORM_TENANTS, invoices: PLATFORM_INVOICES,
+  };
+}
+
 const visitsThisMonth = () => { const m = new Date(); m.setDate(1); m.setHours(0, 0, 0, 0); return sessions.filter((x) => x.start >= m.getTime()).length; };
 
 const siteName = (sid: string) => sites.find((s) => s.id === sid)?.name ?? '';
@@ -295,7 +336,22 @@ function group<T>(arr: T[], key: (t: T) => string) {
 const handlers: [string, RegExp, (m: RegExpMatchArray, p: URLSearchParams, body: any) => any][] = [
   ...adsHandlers,
   ['POST', /^\/api\/auth\/(login|signup|switch)$/, () => ({ token: 'demo' })],
-  ['GET', /^\/api\/me$/, () => ({ user: USER, tenant, role: 'owner', workspaces: [{ id: tenant.id, name: tenant.name, role: 'owner' }], billing: billingState(), is_superadmin: false })],
+  ['GET', /^\/api\/me$/, () => ({ user: USER, tenant, role: 'owner', workspaces: [{ id: tenant.id, name: tenant.name, role: 'owner' }], billing: billingState(), is_superadmin: true })], // в демо видны оба кабинета: владельца платформы и клиента
+  ['GET', /^\/api\/admin\/overview$/, () => platformOverview()],
+  ['POST', /^\/api\/admin\/payments\/([^/]+)\/mark-paid$/, (m) => {
+    const i = PLATFORM_INVOICES.findIndex((x) => x.id === m[1]);
+    const inv = PLATFORM_INVOICES.splice(i, 1)[0];
+    const t = PLATFORM_TENANTS.find((x) => x.name === inv.tenant_name);
+    if (t) Object.assign(t, { plan: inv.plan, billing_period: inv.period, paid_total: t.paid_total + inv.amount,
+      paid_until: new Date(Math.max(Date.now(), t.paid_until ? Date.parse(t.paid_until) : 0) + (inv.period === 'year' ? 365 : 30) * DAY).toISOString() });
+    return { ok: true };
+  }],
+  ['POST', /^\/api\/admin\/tenants\/([^/]+)\/extend$/, (m, _p, b) => {
+    const t = PLATFORM_TENANTS.find((x) => x.id === m[1]);
+    if (t.paid_until) t.paid_until = new Date(Math.max(Date.now(), Date.parse(t.paid_until)) + b.days * DAY).toISOString();
+    else t.trial_ends_at = new Date(Math.max(Date.now(), Date.parse(t.trial_ends_at)) + b.days * DAY).toISOString();
+    return { ok: true };
+  }],
   ['GET', /^\/api\/billing$/, () => ({
     enabled: true, invoices: true, state: billingState(), year_discount: 0.2, ai_addon_price: 1500, plans: PLANS_DEMO, payments,
     usage: { visits: visitsThisMonth(), sites: sites.length, users: team.length },

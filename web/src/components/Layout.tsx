@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useStore, presetRange, type Preset } from '../lib/store';
 import { api, DEMO } from '../lib/api';
 import { ROLE_LABELS } from '../lib/labels';
@@ -22,6 +22,13 @@ export function Layout() {
   };
   const [open, setOpen] = useState(false);
   const loc = useLocation();
+  const nav = useNavigate();
+  // Два кабинета: владельца платформы (раздел «Платформа») и компании. Переключатель видит только владелец платформы
+  // (и все в демо). Владелец переключается между «Платформой» и СВОЕЙ компанией — в кабинеты клиентов входа нет.
+  const canSwitch = !!me?.is_superadmin;
+  const ownerMode = canSwitch && loc.pathname.startsWith('/platform');
+  const sections = ownerMode ? [[['/platform', 'Компании и выручка', 'platform']]] as [string, string, string][][] : NAV;
+  const sectionNames = ownerMode ? ['Кабинет владельца'] : SECTIONS;
   return (
     <div className="app">
       <aside className={`sidebar${open ? ' open' : ''}`} onClick={() => setOpen(false)}>
@@ -31,9 +38,9 @@ export function Layout() {
           </div>
           Пульс CRM
         </div>
-        {[...NAV, ...(me?.is_superadmin ? [[['/platform', 'Платформа', 'platform']]] : [])].map((items, i) => (
+        {sections.map((items, i) => (
           <nav className="nav" key={i}>
-            <div className="nav-section">{SECTIONS[i]}</div>
+            <div className="nav-section">{sectionNames[i]}</div>
             {items.map(([to, label, icon]) => (
               <NavLink key={to} to={to} end={to === '/'}>
                 <Icon name={icon} /> {label}
@@ -47,8 +54,8 @@ export function Layout() {
               <select value={me!.tenant.id} onClick={(e) => e.stopPropagation()} onChange={(e) => switchTo(e.target.value)} aria-label="Компания" style={{ width: '100%', fontWeight: 600, marginBottom: 4 }}>
                 {me!.workspaces.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
               </select>
-            ) : <div style={{ fontWeight: 600, color: 'var(--text)' }}>{me?.tenant.name}</div>}
-            <div>{me?.user.name} · {ROLE_LABELS[me?.role ?? 'viewer']}</div>
+            ) : <div style={{ fontWeight: 600, color: 'var(--text)' }}>{ownerMode ? 'Пульс CRM' : me?.tenant.name}</div>}
+            <div>{me?.user.name} · {ownerMode ? 'владелец платформы' : ROLE_LABELS[me?.role ?? 'viewer']}</div>
           </div>
           {!DEMO && <button className="btn sm" onClick={logout}><Icon name="logout" size={14} /> Выйти</button>}
         </div>
@@ -58,6 +65,24 @@ export function Layout() {
           <button className="btn sm" aria-label="Меню" onClick={() => setOpen(true)}><Icon name="menu" /></button>
           <b>Пульс CRM</b>
         </div>
+        {canSwitch && (
+          <div className="cabinet-bar" role="group" aria-label="Кабинет">
+            <span className="cabinet-label">Кабинет:</span>
+            <div className="seg">
+              <button className={ownerMode ? 'on' : ''} onClick={() => !ownerMode && nav('/platform')}>
+                <Icon name="platform" size={15} /> Владелец Пульс CRM
+              </button>
+              <button className={!ownerMode ? 'on' : ''} onClick={() => ownerMode && nav('/')}>
+                <Icon name="contacts" size={15} /> {DEMO ? 'Клиент' : 'Моя компания'}<span className="cab-name"> · {me?.tenant.name}</span>
+              </button>
+            </div>
+            <span className="cabinet-note">
+              {DEMO
+                ? 'В демо можно открыть оба. В сервисе клиент видит только свой кабинет, а владелец платформы — только «Платформу» без заказов и выручки клиентов.'
+                : 'В кабинеты клиентов входа нет — их заказы и выручку видят только они сами.'}
+            </span>
+          </div>
+        )}
         <main className="main" key={loc.pathname}>
           {DEMO && (
             <div className="demo-banner">
